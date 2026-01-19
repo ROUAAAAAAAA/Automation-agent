@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:18
+    container_name: insurance-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: insurance_platform
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql  # Persists data
+      - ./database/migrations:/docker-entrypoint-initdb.d  
+
+volumes:
+  postgres_data:

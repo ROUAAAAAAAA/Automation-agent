@@ -1,0 +1,859 @@
+{
+  "metadata": {
+    "processed_at": "2026-01-12T15:40:11.504808",
+    "source_file": "noon_products.json",
+    "max_products": 20,
+    "saved_count": 19,
+    "skipped_count": 0,
+    "error_count": 1,
+    "partner": "Noon"
+  },
+  "packages": [
+    {
+      "product": {
+        "product_name": "Watch 5 46mm Smartwatch",
+        "brand": "Huawei",
+        "category": "Wearables",
+        "price": 1123.0,
+        "currency": "AED",
+        "description": "The Huawei Watch 5 features multi-sensing X-tap technology, real-time fingertip blood oxygen monitoring, and supports eSIM. Compatible with both iOS and Android devices."
+      },
+      "insurance_package": {
+        "product": {
+          "name": "Watch 5 46mm Smartwatch",
+          "brand": "Huawei",
+          "category": "Wearables",
+          "price": 1123.0,
+          "currency": "AED",
+          "description": "The Huawei Watch 5 features multi-sensing X-tap technology, real-time fingertip blood oxygen monitoring, and supports eSIM. Compatible with both iOS and Android devices."
+        },
+        "eligible": true,
+        "risk_profile": "ELECTRONIC_PRODUCTS",
+        "market": "UAE",
+        "document_type": "STANDARD",
+        "value_bucket": "L",
+        "premium": {
+          "12_months": {
+            "annual_premium": 89.84,
+            "currency": "AED"
+          },
+          "24_months": {
+            "total_premium": 163.73,
+            "currency": "AED"
+          }
+        },
+        "coverage_modules": [
+          "Accidental Damage",
+          "Oxidation / Liquid Damage",
+          "Extended Warranty",
+          "Theft – OPTIONAL"
+        ],
+        "exclusions": [
+          "Intentional damage",
+          "Normal wear and tear",
+          "Cosmetic damage",
+          "Loss without theft",
+          "Professional or industrial use",
+          "Refurbished products",
+          "Accessories not integrated"
+        ]
+      },
+      "eligible": true,
+      "status": "ai_generated",
+      "processed_at": "2026-01-12T15:40:36.943701"
+    },
+    {
+      "product": {
+        "product_name": "Real Mirror Non Reversing, Square Household Non Reversing Wooden Mirror, Portable True Mirror for Dormitory, Home, Apartment, No Mirror Mirror",
+        "brand": "Generic",
+        "category": "Interior Accessories",
+        "price": 159.9,
+        "currency": "AED",
+        "description": "Durable non-reversing mirror made of solid wood, ideal for personal grooming and correction of appearance."
+      },
+      "insurance_package": {
+        "product": {
+          "name": "Real Mirror Non Reversing, Square Household Non Reversing Wooden Mirror, Portable True Mirror for Dormitory, Home, Apartment, No Mirror Mirror",
+          "brand": "Generic",
+          "category": "Interior Accessories",
+          "price": 0,
+          "currency": "AED"
+        },
+        "eligible": false,
+        "reason": "Product is not listed in the Eligible Products section of any relevant document."
+      },
+      "eligible": false,
+      "status": "not_eligible",
+      "processed_at": "2026-01-12T15:40:48.401653"
+    },
+    {
+      "product": {
+        "product_name": "Apple iPhone 17 256GB Lavender",
+        "brand": "Apple",
+        "category": "Mobiles & Accessories",
+        "price": 3479.0,
+        "currency": "AED",
+        "description": "Apple iPhone 17 256GB Lavender 5G (Nano SIM + eSIM) With FaceTime - International Version."
+      },
+      "insurance_package": {
+        "product": {
+          "name": "Apple iPhone 17 256GB Lavender",
+          "brand": "Apple",
+          "category": "Mobiles & Accessories",
+          "price": 3479.0,
+          "currency": "AED",
+          "description": "Apple iPhone 17 256GB Lavender 5G (Nano SIM + eSIM) With FaceTime - International Version."
+        },
+        "eligible": true,
+        "risk_profile": "ELECTRONIC_PRODUCTS",
+        "market": "UAE",
+        "document_type": "STANDARD",
+        "value_bucket": "M",
+        "premium": {
+          "12_months": {
+            "annual_premium": 330.5,
+            "currency": "AED"
+          },
+          "24_months": {
+            "total_premium": 602.35,
+            "currency": "AED"
+          }
+        },
+        "coverage_modules": [
+          "Accidental Damage",
+          "Oxidation / Liquid Damage",
+          "Extended Warranty",
+          "Theft – OPTIONAL"
+        ],
+        "exclusions": [
+          "Intentional damage",
+          "Normal wear and tear",
+          "Cosmetic damage",
+          "Loss without theft",
+          "Professional or industrial use",
+          "Refurbished products",
+          "Accessories not integrated"
+        ]
+      },
+      "eligible": true,
+      "status": "ai_generated",
+      "processed_at": "2026-01-12T15:41:06.264931"
+    },
+    {
+      "product": {
+        "product_name": "Aloe Vera Soothing Gel",
+        "brand": "SKYMORE",
+        "category": "Beauty & Fragrance > Skin Care > Creams & Moisturizers",
+        "price": 9.0,
+        "currency": "AED",
+        "description": "Aloe Vera Soothing Gel deeply moisturizes your skin from within, helping to retain moisture and repair cracks for a healthy glow."
+      },
+      "insurance_package": {
+        "product": {
+          "name": "Aloe Vera Soothing Gel",
+          "brand": "SKYMORE",
+          "category": "Beauty & Fragrance > Skin Care > Creams & Moisturizers",
+          "price": 0,
+          "currency": "AED"
+        },
+        "eligible": false,
+        "reason": "Product is not listed in the Eligible Products section."
+      },
+      "eligible": false,
+      "status": "not_eligible",
+      "processed_at": "2026-01-12T15:41:16.581398"
+    },
+    {
+      "product": {
+        "product_name": "Men's and Women's Formal Wear, Professional Shirts, Bank Work Clothes",
+        "brand": "Generic",
+        "category": "Men's Work & Industrial Uniforms",
+        "price": 65.0,
+        "currency": "AED",
+        "description": "Men's and Women's Formal Wear, Professional Shirts, Bank Work Clothes, Business Formal Wear, No-Iron Stretch Shirts, Printed and Embroidered Logo."
+      },
+      "insurance_package": {
+        "product": {
+          "name": "Men's and Women's Formal Wear, Professional Shirts, Bank Work Clothes",
+          "brand": "Generic",
+          "category": "Men's Work & Industrial Uniforms",
+          "price": 0,
+          "currency": "AED"
+        },
+        "eligible": false,
+        "reason": "Product is not covered as it does not appear in the 'Eligible Products' section of any relevant document."
+      },
+      "eligible": false,
+      "status": "not_eligible",
+      "processed_at": "2026-01-12T15:41:28.397320"
+    },
+    {
+      "product": {
+        "product_name": "HP Victus 15-fb3093dx Laptop",
+        "brand": "HP",
+        "category": "Laptops",
+        "price": 2404.0,
+        "currency": "AED",
+        "description": "HP Victus 15-fb3093dx Laptop with a 15.6-Inch FHD IPS 144Hz Display, equipped with AMD Ryzen 7 7445HS, 16GB RAM, and 512GB SSD."
+      },
+      "insurance_package": {
+        "product": {
+          "name": "HP Victus 15-fb3093dx Laptop",
+          "brand": "HP",
+          "category": "Laptops",
+          "price": 2404.0,
+          "currency": "AED",
+          "description": "HP Victus 15-fb3093dx Laptop with a 15.6-Inch FHD IPS 144Hz Display, equipped with AMD Ryzen 7 7445HS, 16GB RAM, and 512GB SSD."
+        },
+        "eligible": true,
+        "risk_profile": "ELECTRONIC_PRODUCTS",
+        "market": "UAE",
+        "document_type": "ASSURMAX",
+        "value_bucket": "M",
+        "plans": {
+          "ASSURMAX": {
+            "12_months": {
+              "annual_premium": 228.38,
+              "currency": "AED",
+              "per_item_cap": 4000,
+              "pack_cap": 8000
+            },
+            "24_months": {
+              "total_premium": 416.22,
+              "currency": "AED",
+              "per_item_cap": 4000,
+              "pack_cap": 8000
+            }
+          },
+          "ASSURMAX+": {
+            "12_months": {
+              "annual_premium": 228.38,
+              "currency": "AED",
+              "per_item_cap": 6000,
+              "pack_cap": 12000
+            },
+            "24_months": {
+              "total_premium": 416.22,
+              "currency": "AED",
+              "per_item_cap": 6000,
+              "pack_cap": 12000
+            }
+          }
+        },
+        "coverage_modules": [
+          "Accidental Damage",
+          "Oxidation",
+          "Extended Warranty",
+          "Theft"
+        ],
+        "exclusions": [
+          "Intentional damage",
+          "Normal wear and tear",
+          "Cosmetic damage",
+          "Loss without theft",
+          "Professional or industrial use",
+          "Refurbished products",
+          "Accessories not integrated"
+        ]
+      },
+      "eligible": true,
+      "status": "ai_generated",
+      "processed_at": "2026-01-12T15:42:09.839115"
+    },
+    {
+      "product": {
+        "product_name": "2025 New Men's Leather Sandals",
+        "brand": "Generic",
+        "category": "Men's Footwear",
+        "price": 150.0,
+        "currency": "AED",
+        "description": "Experience the ultimate comfort and style of summer with the 2025 new men's leather sandals, designed specifically for the modern man. These stylish sandals are perfect for beach vacations and everyday casual wear."
+      },
+      "insurance_package": {
+        "product": {
+          "name": "2025 New Men's Leather Sandals",
+          "brand": "Generic",
+          "category": "Men's Footwear",
+          "price": 0,
+          "currency": "AED"
+        },
+        "eligible": false,
+        "reason": "Product is not covered as it is not listed in the Eligible Products section of any relevant document."
+      },
+      "eligible": false,
+      "status": "not_eligible",
+      "processed_at": "2026-01-12T15:42:19.594588"
+    },
+    {
+      "product": {
+        "product_name": "10pcs 3D Wall Sticker Self Adhesive Wall Panels Waterproof PE Foam White Wallpaper For Living Room TV Wall and Home Decor",
+        "brand": "Lingwei",
+        "category": "Wall Stickers & Murals",
+        "price": 81.75,
+        "currency": "AED",
+        "description": "The 10pcs 3D Wall Sticker is made of high-quality PE foam and is waterproof, providing a modern and elegant style for your home decor. It's easy to install and cut, perfect for enhancing your living space without the effort of traditional wallpaper."
+      },
+      "insurance_package": {
+        "product": {
+          "name": "10pcs 3D Wall Sticker Self Adhesive Wall Panels Waterproof PE Foam White Wallpaper For Living Room TV Wall and Home Decor",
+          "brand": "Lingwei",
+          "category": "Wall Stickers & Murals",
+          "price": 0,
+          "currency": "AED"
+        },
+        "eligible": false,
+        "reason": "Product is not covered as it does not appear in the 'Eligible Products' section of any relevant document."
+      },
+      "eligible": false,
+      "status": "not_eligible",
+      "processed_at": "2026-01-12T15:42:30.782613"
+    },
+    {
+      "product": {
+        "product_name": "Apple New 2025 MacBook Air MW123 13-Inch Display, Apple M4 Chip 10-Core CPU 8-Core GPU Processor/16GB RAM/256GB SSD/macOS(International Version) English Midnight",
+        "brand": "Apple",
+        "category": "Laptops",
+        "price": 3049.0,
+        "currency": "AED",
+        "description": "Apple New 2025 MacBook Air with 13-Inch Display, Apple M4 Chip, 16GB RAM, and 256GB SSD. Available in Midnight color."
+      },
+      "insurance_package": {
+        "product": {
+          "name": "Apple New 2025 MacBook Air MW123 13-Inch Display, Apple M4 Chip 10-Core CPU 8-Core GPU Processor/16GB RAM/256GB SSD/macOS(International Version) English Midnight",
+          "brand": "Apple",
+          "category": "Laptops",
+          "price": 3049.0,
+          "currency": "AED",
+          "description": "Apple New 2025 MacBook Air with 13-Inch Display, Apple M4 Chip, 16GB RAM, and 256GB SSD. Available in Midnight color."
+        },
+        "eligible": true,
+        "risk_profile": "ELECTRONIC_PRODUCTS",
+        "market": "UAE",
+        "document_type": "ASSURMAX",
+        "value_bucket": "M",
+        "plans": {
+          "ASSURMAX": {
+            "12_months": {
+              "annual_premium": 289.66,
+              "currency": "AED",
+              "per_item_cap": 4000,
+              "pack_cap": 8000
+            },
+            "24_months": {
+              "total_premium": 527.9,
+              "currency": "AED",
+              "per_item_cap": 4000,
+              "pack_cap": 8000
+            }
+          },
+          "ASSURMAX+": {
+            "12_months": {
+              "annual_premium": 289.66,
+              "currency": "AED",
+              "per_item_cap": 6000,
+              "pack_cap": 12000
+            },
+            "24_months": {
+              "total_premium": 527.9,
+              "currency": "AED",
+              "per_item_cap": 6000,
+              "pack_cap": 12000
+            }
+          }
+        },
+        "coverage_modules": [
+          "Accidental Damage",
+          "Oxidation / Liquid Damage",
+          "Extended Warranty",
+          "Theft – OPTIONAL"
+        ],
+        "exclusions": [
+          "Intentional damage",
+          "Normal wear and tear",
+          "Cosmetic damage",
+          "Loss without theft",
+          "Professional or industrial use",
+          "Refurbished products",
+          "Accessories not integrated"
+        ]
+      },
+      "eligible": true,
+      "status": "ai_generated",
+      "processed_at": "2026-01-12T15:42:56.050383"
+    },
+    {
+      "product": {
+        "product_name": "New Vapor Shower Tablets 10 Tabs",
+        "brand": "Better Bath Better Body",
+        "category": "Personal Care/Shower Gels & Body Wash",
+        "price": 82.05,
+        "currency": "AED",
+        "description": "New Vapor Shower Tablets scented with pure eucalyptus and camphor essential oils for a luxurious shower experience at home."
+      },
+      "insurance_package": {
+        "product": {
+          "name": "New Vapor Shower Tablets 10 Tabs",
+          "brand": "Better Bath Better Body",
+          "category": "Personal Care/Shower Gels & Body Wash",
+          "price": 0,
+          "currency": "AED"
+        },
+        "eligible": false,
+        "reason": "Product is not listed in the Eligible Products section of any relevant document."
+      },
+      "eligible": false,
+      "status": "not_eligible",
+      "processed_at": "2026-01-12T15:43:07.435670"
+    },
+    {
+      "product": {
+        "product_name": "5-Piece Colourmate Synthetic Round Paint Brush Set",
+        "brand": "DOMS",
+        "category": "Arts & Crafts Supplies",
+        "price": 10.95,
+        "currency": "AED",
+        "description": "5-Piece Colourmate Synthetic Round Paint Brush Set ideal for beginners and artists; soft and premium quality for all types of water and acrylic colors."
+      },
+      "insurance_package": {
+        "product": {
+          "name": "5-Piece Colourmate Synthetic Round Paint Brush Set",
+          "brand": "DOMS",
+          "category": "Arts & Crafts Supplies",
+          "price": 0,
+          "currency": "AED"
+        },
+        "eligible": false,
+        "reason": "Product is not listed in the Eligible Products section and is not covered under any relevant document."
+      },
+      "eligible": false,
+      "status": "not_eligible",
+      "processed_at": "2026-01-12T15:43:17.262044"
+    },
+    {
+      "product": {
+        "product_name": "Baby Diapers Disposable for Sensitive Skin, Extra-Absorbent, Hypoallergenic, and Eco-Friendly",
+        "brand": "Beinoen",
+        "category": "Baby Products",
+        "price": 76.0,
+        "currency": "AED",
+        "description": "Baby Diapers Disposable for Sensitive Skin, Extra-Absorbent, Hypoallergenic, and Eco-Friendly. Designed for a snug and comfort fit, providing cloud-like softness and 12-hour dryness."
+      },
+      "insurance_package": {
+        "product": {
+          "name": "Baby Diapers Disposable for Sensitive Skin, Extra-Absorbent, Hypoallergenic, and Eco-Friendly",
+          "brand": "Beinoen",
+          "category": "Baby Products",
+          "price": 0,
+          "currency": "AED"
+        },
+        "eligible": false,
+        "reason": "Product is a consumable and is explicitly excluded from coverage."
+      },
+      "eligible": false,
+      "status": "not_eligible",
+      "processed_at": "2026-01-12T15:43:27.240803"
+    },
+    {
+      "product": {
+        "product_name": "Apple iPhone 17 Pro Max 256 GB Cosmic Orange 5G",
+        "brand": "Apple",
+        "category": "Mobiles & Accessories",
+        "price": 4899.0,
+        "currency": "AED",
+        "description": "Apple iPhone 17 Pro Max 256 GB Cosmic Orange 5G (eSim only) With FaceTime - International Version."
+      },
+      "insurance_package": {
+        "product": {
+          "name": "Apple iPhone 17 Pro Max 256 GB Cosmic Orange 5G",
+          "brand": "Apple",
+          "category": "Mobiles & Accessories",
+          "price": 4899.0,
+          "currency": "AED",
+          "description": "Apple iPhone 17 Pro Max 256 GB Cosmic Orange 5G (eSim only) With FaceTime - International Version."
+        },
+        "eligible": true,
+        "risk_profile": "ELECTRONIC_PRODUCTS",
+        "market": "UAE",
+        "document_type": "STANDARD",
+        "value_bucket": "M",
+        "premium": {
+          "12_months": {
+            "annual_premium": 465.41,
+            "currency": "AED"
+          },
+          "24_months": {
+            "total_premium": 628.3,
+            "currency": "AED"
+          }
+        },
+        "coverage_modules": [
+          "Accidental Damage",
+          "Oxidation / Liquid Damage",
+          "Extended Warranty",
+          "Theft – OPTIONAL"
+        ],
+        "exclusions": [
+          "Intentional damage",
+          "Normal wear and tear",
+          "Cosmetic damage",
+          "Loss without theft",
+          "Professional or industrial use",
+          "Refurbished products",
+          "Accessories not integrated"
+        ]
+      },
+      "eligible": true,
+      "status": "ai_generated",
+      "processed_at": "2026-01-12T15:43:40.750903"
+    },
+    {
+      "product": {
+        "product_name": "Apple MacBook Air MC7X4 13.6-Inch",
+        "brand": "Apple",
+        "category": "Laptops",
+        "price": 2349.0,
+        "currency": "AED",
+        "description": "Apple MacBook Air MC7X4 13.6-Inch Display : Apple M2 chip with 8-core CPU and 8-core GPU, 16GB RAM/256GB SSD(International Version) English Midnight."
+      },
+      "insurance_package": {
+        "product": {
+          "name": "Apple MacBook Air MC7X4 13.6-Inch",
+          "brand": "Apple",
+          "category": "Laptops",
+          "price": 2349.0,
+          "currency": "AED",
+          "description": "Apple MacBook Air MC7X4 13.6-Inch Display : Apple M2 chip with 8-core CPU and 8-core GPU, 16GB RAM/256GB SSD(International Version) English Midnight."
+        },
+        "eligible": true,
+        "risk_profile": "ELECTRONIC_PRODUCTS",
+        "market": "UAE",
+        "document_type": "ASSURMAX",
+        "value_bucket": "M",
+        "plans": {
+          "ASSURMAX": {
+            "12_months": {
+              "annual_premium": 223.16,
+              "currency": "AED",
+              "per_item_cap": 4000,
+              "pack_cap": 8000
+            },
+            "24_months": {
+              "total_premium": 406.7,
+              "currency": "AED",
+              "per_item_cap": 4000,
+              "pack_cap": 8000
+            }
+          },
+          "ASSURMAX+": {
+            "12_months": {
+              "annual_premium": 223.16,
+              "currency": "AED",
+              "per_item_cap": 6000,
+              "pack_cap": 12000
+            },
+            "24_months": {
+              "total_premium": 406.7,
+              "currency": "AED",
+              "per_item_cap": 6000,
+              "pack_cap": 12000
+            }
+          }
+        },
+        "coverage_modules": [
+          "Accidental Damage",
+          "Oxidation / Liquid Damage",
+          "Extended Warranty",
+          "Theft – OPTIONAL"
+        ],
+        "exclusions": [
+          "Intentional damage",
+          "Normal wear and tear",
+          "Cosmetic damage",
+          "Loss without theft",
+          "Professional or industrial use",
+          "Refurbished products",
+          "Accessories not integrated"
+        ]
+      },
+      "eligible": true,
+      "status": "ai_generated",
+      "processed_at": "2026-01-12T15:44:21.613994"
+    },
+    {
+      "product": {
+        "product_name": "PlayStation 5 Console (Disc Version) With Controller",
+        "brand": "Sony",
+        "category": "Gaming Consoles",
+        "price": 1800.0,
+        "currency": "AED",
+        "description": "The PS5 console unleashes new gaming possibilities with lightning fast loading, deeper immersion with support for haptic feedback, adaptive triggers, and 3D Audio. Experience stunning graphics and an incredible gaming environment."
+      },
+      "insurance_package": {
+        "product": {
+          "name": "PlayStation 5 Console (Disc Version) With Controller",
+          "brand": "Sony",
+          "category": "Gaming Consoles",
+          "price": 1800.0,
+          "currency": "AED",
+          "description": "The PS5 console unleashes new gaming possibilities with lightning fast loading, deeper immersion with support for haptic feedback, adaptive triggers, and 3D Audio. Experience stunning graphics and an incredible gaming environment."
+        },
+        "eligible": true,
+        "risk_profile": "ELECTRONIC_PRODUCTS",
+        "market": "UAE",
+        "document_type": "ASSURMAX",
+        "value_bucket": "L",
+        "plans": {
+          "ASSURMAX": {
+            "12_months": {
+              "annual_premium": 144.0,
+              "currency": "AED",
+              "per_item_cap": 4000,
+              "pack_cap": 8000
+            },
+            "24_months": {
+              "total_premium": 262.44,
+              "currency": "AED",
+              "per_item_cap": 4000,
+              "pack_cap": 8000
+            }
+          },
+          "ASSURMAX+": {
+            "12_months": {
+              "annual_premium": 144.0,
+              "currency": "AED",
+              "per_item_cap": 6000,
+              "pack_cap": 12000
+            },
+            "24_months": {
+              "total_premium": 262.44,
+              "currency": "AED",
+              "per_item_cap": 6000,
+              "pack_cap": 12000
+            }
+          }
+        },
+        "coverage_modules": [
+          "Accidental Damage",
+          "Oxidation / Liquid Damage",
+          "Extended Warranty",
+          "Theft – OPTIONAL"
+        ],
+        "exclusions": [
+          "Intentional damage",
+          "Normal wear and tear",
+          "Cosmetic damage",
+          "Loss without theft",
+          "Professional or industrial use",
+          "Refurbished products",
+          "Accessories not integrated"
+        ]
+      },
+      "eligible": true,
+      "status": "ai_generated",
+      "processed_at": "2026-01-12T15:44:58.420120"
+    },
+    {
+      "product": {
+        "product_name": "Apple iPhone 17 Pro 256 GB",
+        "brand": "Apple",
+        "category": "Mobiles & Accessories",
+        "price": 4499.0,
+        "currency": "AED",
+        "description": "Apple iPhone 17 Pro 256 GB Cosmic Orange 5G (eSim only) With FaceTime - International Version."
+      },
+      "insurance_package": {
+        "product": {
+          "name": "Apple iPhone 17 Pro 256 GB",
+          "brand": "Apple",
+          "category": "Mobiles & Accessories",
+          "price": 4499.0,
+          "currency": "AED",
+          "description": "Apple iPhone 17 Pro 256 GB Cosmic Orange 5G (eSim only) With FaceTime - International Version."
+        },
+        "eligible": true,
+        "risk_profile": "ELECTRONIC_PRODUCTS",
+        "market": "UAE",
+        "document_type": "STANDARD",
+        "value_bucket": "M",
+        "premium": {
+          "12_months": {
+            "annual_premium": 427.41,
+            "currency": "AED"
+          },
+          "24_months": {
+            "total_premium": 577.0,
+            "currency": "AED"
+          }
+        },
+        "coverage_modules": [
+          "Accidental Damage",
+          "Oxidation / Liquid Damage",
+          "Extended Warranty",
+          "Theft – OPTIONAL"
+        ],
+        "exclusions": [
+          "Intentional damage",
+          "Normal wear and tear",
+          "Cosmetic damage",
+          "Loss without theft",
+          "Professional or industrial use",
+          "Refurbished products",
+          "Accessories not integrated"
+        ]
+      },
+      "eligible": true,
+      "status": "ai_generated",
+      "processed_at": "2026-01-12T15:45:15.300465"
+    },
+    {
+      "product": {
+        "product_name": "V60 Conical Burr Coffee Grinder",
+        "brand": "Doscher",
+        "category": "Small Appliances",
+        "price": 189.0,
+        "currency": "AED",
+        "description": "The V60 Conical Burr Coffee Grinder features 38 adjustable grind settings, a precision timer, and an anti-static design, ideal for brewing fresh coffee."
+      },
+      "insurance_package": {
+        "product": {
+          "name": "V60 Conical Burr Coffee Grinder",
+          "brand": "Doscher",
+          "category": "Small Appliances",
+          "price": 0,
+          "currency": "AED"
+        },
+        "eligible": false,
+        "reason": "Product is not covered as it is not listed in the Eligible Products section of any relevant document."
+      },
+      "eligible": false,
+      "status": "not_eligible",
+      "processed_at": "2026-01-12T15:45:26.018901"
+    },
+    {
+      "product": {
+        "product_name": "Samsung Galaxy S25 Ultra AI Dual SIM Titanium Grey 12GB RAM 256GB 5G - Middle East Version",
+        "brand": "Samsung",
+        "category": "Mobiles",
+        "price": 3467.0,
+        "currency": "AED",
+        "description": "Samsung Galaxy S25 Ultra AI Dual SIM Titanium Grey 12GB RAM 256GB 5G - Middle East Version."
+      },
+      "insurance_package": {
+        "product": {
+          "name": "Samsung Galaxy S25 Ultra AI Dual SIM Titanium Grey 12GB RAM 256GB 5G - Middle East Version",
+          "brand": "Samsung",
+          "category": "Mobiles",
+          "price": 3467.0,
+          "currency": "AED",
+          "description": "Samsung Galaxy S25 Ultra AI Dual SIM Titanium Grey 12GB RAM 256GB 5G - Middle East Version."
+        },
+        "eligible": true,
+        "risk_profile": "ELECTRONIC_PRODUCTS",
+        "market": "UAE",
+        "document_type": "ASSURMAX",
+        "value_bucket": "M",
+        "plans": {
+          "ASSURMAX": {
+            "12_months": {
+              "annual_premium": 329.37,
+              "currency": "AED",
+              "per_item_cap": 4000,
+              "pack_cap": 8000
+            },
+            "24_months": {
+              "total_premium": 600.27,
+              "currency": "AED",
+              "per_item_cap": 4000,
+              "pack_cap": 8000
+            }
+          },
+          "ASSURMAX+": {
+            "12_months": {
+              "annual_premium": 329.37,
+              "currency": "AED",
+              "per_item_cap": 6000,
+              "pack_cap": 12000
+            },
+            "24_months": {
+              "total_premium": 600.27,
+              "currency": "AED",
+              "per_item_cap": 6000,
+              "pack_cap": 12000
+            }
+          }
+        },
+        "coverage_modules": [
+          "Accidental Damage",
+          "Oxidation / Liquid Damage",
+          "Extended Warranty",
+          "Theft – OPTIONAL"
+        ],
+        "exclusions": [
+          "Intentional damage",
+          "Normal wear and tear",
+          "Cosmetic damage",
+          "Loss without theft",
+          "Professional or industrial use",
+          "Refurbished products",
+          "Accessories not integrated"
+        ]
+      },
+      "eligible": true,
+      "status": "ai_generated",
+      "processed_at": "2026-01-12T15:46:04.045407"
+    },
+    {
+      "product": {
+        "product_name": "Apple iPhone Air 256GB Sky Blue 5G",
+        "brand": "Apple",
+        "category": "Mobiles & Accessories",
+        "price": 3599.0,
+        "currency": "AED",
+        "description": "Apple iPhone Air 256GB Sky Blue 5G (eSim only) With FaceTime - International Version"
+      },
+      "insurance_package": {
+        "product": {
+          "name": "Apple iPhone Air 256GB Sky Blue 5G",
+          "brand": "Apple",
+          "category": "Mobiles & Accessories",
+          "price": 3599.0,
+          "currency": "AED",
+          "description": "Apple iPhone Air 256GB Sky Blue 5G (eSim only) With FaceTime - International Version"
+        },
+        "eligible": true,
+        "risk_profile": "ELECTRONIC_PRODUCTS",
+        "market": "UAE",
+        "document_type": "STANDARD",
+        "value_bucket": "M",
+        "premium": {
+          "12_months": {
+            "annual_premium": 341.91,
+            "currency": "AED"
+          },
+          "24_months": {
+            "total_premium": 623.12,
+            "currency": "AED"
+          }
+        },
+        "coverage_modules": [
+          "Accidental Damage",
+          "Oxidation / Liquid Damage",
+          "Extended Warranty",
+          "Theft – OPTIONAL"
+        ],
+        "exclusions": [
+          "Intentional damage",
+          "Normal wear and tear",
+          "Cosmetic damage",
+          "Loss without theft",
+          "Professional or industrial use",
+          "Refurbished products",
+          "Accessories not integrated"
+        ]
+      },
+      "eligible": true,
+      "status": "ai_generated",
+      "processed_at": "2026-01-12T15:46:23.172794"
+    }
+  ]
+}
