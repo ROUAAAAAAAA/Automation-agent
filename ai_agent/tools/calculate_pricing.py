@@ -2,7 +2,20 @@ from langchain_core.tools import tool
 from typing import Union
 
 
-# RATE MATRIX - Base rates per risk profile and value bucket
+
+
+ASSURMAX_CONFIG = {
+    "UAE": {
+        "pack_cap": 5000,
+        "currency": "AED",
+        "premium_rate": 0.11,  # 11%
+        "max_products": 3
+    }
+}
+
+
+
+
 RATE_MATRIX = {
     # UAE 
     "ELECTRONIC_PRODUCTS": {"L": 0.08, "M": 0.095, "H": 0.11},
@@ -35,13 +48,11 @@ RATE_MATRIX = {
     "FURNITURE_TN": {"L": 0.06, "M": 0.075, "H": 0.09},
 }
 
-
-# DURATION FACTOR ONLY - NO PACK FACTOR!
+# DURATION FACTOR 
 DURATION_FACTOR = {
     12: 1.00,
     24: 1.35
 }
-
 
 # VALUE BUCKETS
 BUCKETS_BY_PROFILE_TN = {
@@ -92,79 +103,33 @@ def get_bucket(price: float, market: str = "UAE", risk_profile: str = "") -> str
         return "H"
 
 
-def get_coverage_caps(plan: str, market: str, risk_profile: str) -> dict:
-    """
-    Get coverage caps for ASSURMAX/ASSURMAX+ plans.
-    Returns per_item_cap and pack_cap.
-    """
-    plan_upper = plan.upper()
-    market_lower = market.lower()
-    
-    caps = {
-        "per_item_cap": None,
-        "pack_cap": None,
-        "currency": "AED" if market_lower == "uae" else "TND"
-    }
-    
-    # ELECTRONICS (from ASSURMAX_ELECTRONICS docs)
-    electronics_profiles = [
-        "ELECTRONIC_PRODUCTS", "ELECTRONIC_PRODUCTS_TN", 
-        "MOBILE_PERSONAL", "COMPUTING_GAMING", "HOME_AV", "SPECIALTY"
-    ]
-    
-    if risk_profile in electronics_profiles:
-        if market_lower == "uae":
-            if plan_upper == "ASSURMAX":
-                caps["per_item_cap"] = 4000
-                caps["pack_cap"] = 8000
-            elif plan_upper == "ASSURMAX+":
-                caps["per_item_cap"] = 6000
-                caps["pack_cap"] = 12000
-        elif market_lower == "tunisia":
-            if plan_upper == "ASSURMAX":
-                caps["per_item_cap"] = 2500
-                caps["pack_cap"] = 2500
-            elif plan_upper == "ASSURMAX+":
-                caps["per_item_cap"] = 5000
-                caps["pack_cap"] = 5000
-    
-    # LUXURY (from ASSURMAX_LUXURY doc)
-    elif risk_profile == "OPULENCIA_PREMIUM" and market_lower == "uae":
-        caps["per_item_cap"] = 60000
-        caps["pack_cap"] = None
-    
-    # TEXTILE (from ASSURMAX_TEXTILE doc)
-    elif risk_profile == "TEXTILE_FOOTWEAR_ZARA":
-        # Textile: fixed price per item, retail value reimbursement
-        caps["per_item_cap"] = None
-        caps["pack_cap"] = None
-        caps["note"] = "Fixed price per item, reimbursement based on retail value"
-    
-    return caps
-
 
 @tool
 def calculate_pricing(
-    risk_profile: str,
-    product_value: Union[float, int, str],  
+    risk_profile: str = "",
+    product_value: Union[float, int, str] = 0,
     market: str = "UAE",
     duration_months: int = 12,
-    plan: str = "standard"
+    plan: str = "STANDARD"
 ) -> dict:
     """
-    Calculate insurance pricing based on risk profile and product value.
+    Calculate insurance pricing with NEW SIMPLIFIED ASSURMAX LOGIC.
+    
+    UAE: Returns STANDARD premiums (12m & 24m) + ASSURMAX premium if eligible
+    Tunisia: Returns STANDARD premiums (12m & 24m) only
     
     Args:
-        risk_profile: Product risk category (e.g., ELECTRONIC_PRODUCTS, OPULENCIA_PREMIUM)
+        risk_profile: Product risk category (required for STANDARD plans)
         product_value: Product price in AED or TND
         market: Market region (UAE or Tunisia)
         duration_months: Coverage duration (12 or 24 months)
-        plan: Plan type (ASSURMAX, ASSURMAX+, or standard)
+        plan: "ASSURMAX" or "STANDARD"
     
     Returns:
-        Dictionary with pricing details including premiums, buckets, and coverage caps
+        Dictionary with pricing details
     """
     
+    # Convert product value
     try:
         product_value_float = float(product_value) if product_value else 0.0
     except (ValueError, TypeError):
@@ -174,60 +139,112 @@ def calculate_pricing(
         return {"error": "Invalid product value"}
     
     plan_upper = plan.upper()
+    market_upper = market.upper()
     
-    # ✅ NEW: Get coverage caps FIRST
-    coverage_caps = None
-    insured_value = product_value_float  # Start with full value
-    
-    if plan_upper in ["ASSURMAX", "ASSURMAX+"]:
-        coverage_caps = get_coverage_caps(plan, market, risk_profile)
-        per_item_cap = coverage_caps.get("per_item_cap")
+  
+    if plan_upper == "ASSURMAX":
+        if market_upper != "UAE":
+            return {
+                "error": "ASSURMAX is only available for UAE market",
+                "market": market_upper
+            }
         
-        # ✅ Apply cap to insured value
-        if per_item_cap and product_value_float > per_item_cap:
-            insured_value = per_item_cap
-            print(f"   💡 Product value {product_value_float} exceeds {plan_upper} cap.")
-            print(f"   💡 Premium calculated on capped value: {insured_value}")
+        config = ASSURMAX_CONFIG["UAE"]
+        pack_cap = config["pack_cap"]
+        currency = config["currency"]
+        premium_rate = config["premium_rate"]
+        max_products = config["max_products"]
+        
+        # Check if product exceeds pack cap
+        if product_value_float > pack_cap:
+            return {
+                "error": f"Product value ({product_value_float} {currency}) exceeds ASSURMAX pack cap ({pack_cap} {currency})",
+                "plan": "ASSURMAX",
+                "pack_cap": pack_cap,
+                "currency": currency,
+                "eligible": False,
+                "reason": f"Product price must be ≤ {pack_cap} {currency} for ASSURMAX"
+            }
+        
+        # Calculate flat premium (11% of pack cap = 550 AED)
+        annual_premium = pack_cap * premium_rate
+        
+        return {
+            "plan": "ASSURMAX",
+            "market": market_upper,
+            
+            "12_months": {
+                "annual_premium": round(annual_premium, 2),
+                "currency": currency
+            },
+            
+            "24_months": {
+                "total_premium": round(annual_premium * 2, 2),
+                "currency": currency
+            },
+            
+            "assurmax_pack_cap": {
+                "pack_cap": pack_cap,
+                "currency": currency,
+                "max_products_covered": max_products
+            },
+            
+            "product_value": product_value_float,
+            "premium_rate_percent": round(premium_rate * 100, 1)
+        }
     
-    # Get duration factor
-    duration_factor = DURATION_FACTOR.get(duration_months, 1.0)
+    # ==========================================
+    # STANDARD PRICING (UAE & TUNISIA)
+    # ==========================================
+    elif plan_upper == "STANDARD":
+        if not risk_profile:
+            return {"error": "risk_profile is required for STANDARD pricing"}
+        
+        # Determine bucket
+        bucket = get_bucket(product_value_float, market, risk_profile)
+        
+        # Get base rate
+        rate = RATE_MATRIX.get(risk_profile, {}).get(bucket)
+        
+        if not rate:
+            return {
+                "error": f"No rate found for risk_profile '{risk_profile}' in bucket '{bucket}'",
+                "risk_profile": risk_profile,
+                "bucket": bucket
+            }
+        
+        # Determine currency
+        currency = "TND" if "tunisia" in market.lower() or "tn" in market.lower() else "AED"
+        
+        # Calculate premiums
+        premium_12_months = round(product_value_float * rate, 2)
+        premium_24_months = round(premium_12_months * DURATION_FACTOR[24], 2)
+        
+        return {
+            "plan": "STANDARD",
+            "market": market_upper,
+            
+            "12_months": {
+                "annual_premium": premium_12_months,
+                "currency": currency
+            },
+            
+            "24_months": {
+                "total_premium": premium_24_months,
+                "currency": currency
+            },
+            
+            "product_value": product_value_float,
+            "risk_profile": risk_profile,
+            "bucket": bucket,
+            "base_rate_percent": round(rate * 100, 1)
+        }
     
-    # Determine bucket (use insured_value, not full value)
-    bucket = get_bucket(insured_value, market, risk_profile)
-    
-    # Get base rate
-    rate = RATE_MATRIX.get(risk_profile, {}).get(bucket, 0.08)
-    
-    # ✅ Calculate premium using INSURED VALUE (not product value)
-    gross_premium = (
-        insured_value    # ← Use capped value
-        * rate 
-        * duration_factor
-    )
-    
-    # Determine currency
-    currency = "TND" if "tunisia" in market.lower() else "AED"
-    
-    # Calculate 12-month and 24-month premiums
-    premium_12_months = round(gross_premium, 2)
-    premium_24_months = round(gross_premium * DURATION_FACTOR.get(24, 1.35), 2)
-    
-    return {
-        "plan": plan_upper,
-        "12_months": {
-            "annual_premium": premium_12_months,
-            "currency": currency
-        },
-        "24_months": {
-            "total_premium": premium_24_months,
-            "currency": currency
-        },
-        "bucket": bucket,
-        "base_rate_percent": round(rate * 100, 1),
-        "duration_months": duration_months,
-        "product_value": product_value_float,      # ← Original value
-        "insured_value": insured_value,            # ← NEW: Capped value
-        "risk_profile": risk_profile,
-        "duration_factor": duration_factor,
-        "coverage_caps": coverage_caps if coverage_caps else None
-    }
+    else:
+        return {
+            "error": f"Invalid plan: {plan}. Valid options: ASSURMAX (UAE only), STANDARD",
+            "valid_plans": {
+                "UAE": ["ASSURMAX", "STANDARD"],
+                "Tunisia": ["STANDARD"]
+            }
+        }

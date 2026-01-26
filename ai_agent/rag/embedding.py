@@ -1,4 +1,4 @@
-# build_rag_embeddings.py - UPDATED VERSION
+
 
 from pathlib import Path
 import json
@@ -18,14 +18,14 @@ from pinecone import Pinecone as PineconeClient, ServerlessSpec
 load_dotenv()
 
 INPUT_FILE = Path("C:\\Users\\rouam\\OneDrive\\Bureau\\Automation\\ai_agent\\rag\\knowledge_base\\extracted\\documents.jsonl")
-PINECONE_INDEX_NAME = "insurance-product-specs"  # CHANGED: Matches retriever
+PINECONE_INDEX_NAME = "insurance-product-specs"  
 
-# CHANGED: Larger chunks to keep specs together
-CHUNK_SIZE = 3000        # characters (was 1000)
-CHUNK_OVERLAP = 200      # characters
-BATCH_SIZE = 100         # embedding batch size
 
-EMBEDDING_DIMENSION = 1024  # BAAI/bge-large-en-v1.5
+CHUNK_SIZE = 3000        
+CHUNK_OVERLAP = 200     
+BATCH_SIZE = 100         
+
+EMBEDDING_DIMENSION = 1024  
 
 def load_documents() -> List[Dict]:
     """Load extracted documents from JSONL file"""
@@ -40,9 +40,7 @@ def load_documents() -> List[Dict]:
     print(f" Loaded {len(documents)} document pages")
     return documents
 
-# -------------------------------------------------------------------
-# Chunking - UPDATED
-# -------------------------------------------------------------------
+
 
 def chunk_documents(documents: List[Dict]) -> List[Dict]:
     """Split documents, but try to keep product specs together"""
@@ -66,7 +64,7 @@ def chunk_documents(documents: List[Dict]) -> List[Dict]:
         chunk_size=CHUNK_SIZE,
         chunk_overlap=CHUNK_OVERLAP,
         length_function=len,
-        separators=["\n\n\n", "\n\n", "\n", ". ", " ", ""],  # CHANGED: Prefer larger breaks
+        separators=["\n\n\n", "\n\n", "\n", ". ", " ", ""],  
     )
 
     chunked_docs: List[Dict] = []
@@ -100,7 +98,7 @@ def chunk_documents(documents: List[Dict]) -> List[Dict]:
             
             page_range = f"{min(page_numbers):g}-{max(page_numbers):g}" if page_numbers else "1"
             
-            # Get category from first page
+            
             category = pages[0]["category"] if pages else "N/A"
             
             chunked_docs.append({
@@ -112,7 +110,7 @@ def chunk_documents(documents: List[Dict]) -> List[Dict]:
                     "page_range": page_range,
                     "chunk_index": i,
                     "total_chunks": len(chunks),
-                    "is_complete": is_complete,  # NEW: Track if document is complete
+                    "is_complete": is_complete,  
                     "source": pages[0]["source_path"] if pages else "",
                 },
             })
@@ -123,9 +121,7 @@ def chunk_documents(documents: List[Dict]) -> List[Dict]:
 
     return chunked_docs
 
-# -------------------------------------------------------------------
-# Pinecone initialization - UPDATED
-# -------------------------------------------------------------------
+
 
 def initialize_pinecone() -> PineconeClient:
     """Initialize Pinecone client and ensure index exists"""
@@ -139,9 +135,9 @@ def initialize_pinecone() -> PineconeClient:
 
     existing_indexes = pc.list_indexes().names()
 
-    # CHANGED: Delete old index if it exists and create new one
+   
     if PINECONE_INDEX_NAME in existing_indexes:
-        print(f" ⚠️  Deleting existing index: {PINECONE_INDEX_NAME}")
+        print(f"  Deleting existing index: {PINECONE_INDEX_NAME}")
         pc.delete_index(PINECONE_INDEX_NAME)
     
     print(f" Creating new index: {PINECONE_INDEX_NAME}")
@@ -156,16 +152,14 @@ def initialize_pinecone() -> PineconeClient:
     )
     print(" ✓ Index created successfully")
     
-    # Wait for index to be ready
+    
     import time
     print(" Waiting for index to be ready...")
     time.sleep(5)
 
     return pc
 
-# -------------------------------------------------------------------
-# Embedding + storage
-# -------------------------------------------------------------------
+
 
 def embed_and_store_pinecone(chunks: List[Dict]):
     """Embed text chunks and store them in Pinecone"""
@@ -206,9 +200,7 @@ def embed_and_store_pinecone(chunks: List[Dict]):
     print(" ✓ Embeddings successfully stored in Pinecone")
     return vectorstore
 
-# -------------------------------------------------------------------
-# Retrieval test - UPDATED
-# -------------------------------------------------------------------
+
 
 def test_retrieval(vectorstore):
     """Run sanity-check similarity searches"""
@@ -240,9 +232,7 @@ def test_retrieval(vectorstore):
             print(f"   Complete: {'✓' if meta.get('is_complete', False) else '✗'}")
             print(f"   Preview: {doc.page_content[:150]}...")
 
-# -------------------------------------------------------------------
-# Main - UPDATED
-# -------------------------------------------------------------------
+
 
 def main():
     print("=" * 60)

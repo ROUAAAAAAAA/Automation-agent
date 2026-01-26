@@ -1,10 +1,13 @@
-
+"""
+Streamlit App for Garanty Affinity Insurance
+Reads processed products directly from DATABASE (not JSON files)
+UPDATED: NEW ASSURMAX Logic (5000 AED cap, 550 AED premium)
+"""
 
 import streamlit as st
-import json
 import sys
 from pathlib import Path
-
+from datetime import datetime
 
 st.set_page_config(
     page_title="Garanty Affinity Insurance",
@@ -13,271 +16,388 @@ st.set_page_config(
 )
 
 
-# UI helper renderers
+# ============================================================
+# UI HELPER FUNCTIONS
+# ============================================================
 
 def render_coverage_modules(modules: list):
+    """Display coverage modules"""
     if not modules:
         return
-    st.markdown("### What's Covered")
+    st.markdown("### ✅ What's Covered")
     for m in modules:
-        st.markdown(f"✅ {m}")
+        st.markdown(f"- ✅ {m}")
 
 
 def render_exclusions(exclusions: list):
+    """Display exclusions"""
     if not exclusions:
         return
-    with st.expander("What's NOT Covered"):
+    with st.expander("❌ What's NOT Covered"):
         for e in exclusions:
-            st.markdown(f"❌ {e}")
+            st.markdown(f"- ❌ {e}")
 
 
-def render_assurmax_plans(plans: dict):
-    if not plans:
-        return
-
-    st.markdown("### ASSURMAX Insurance Plans")
-    cols = st.columns(len(plans))
-
-    for col, (plan_name, durations) in zip(cols, plans.items()):
-        with col:
-            st.markdown(f"#### {plan_name}")
-
-            for period, values in durations.items():
-                st.markdown(f"**{period.replace('_', ' ').title()}**")
-
-                if "annual_premium" in values:
-                    st.write(
-                        f"Annual Premium: **{values['annual_premium']} {values['currency']}**"
-                    )
-                else:
-                    st.write(
-                        f"Total Premium: **{values['total_premium']} {values['currency']}**"
-                    )
-
-                if values.get("per_item_cap"):
-                    st.write(
-                        f"Per Item Cap: {values['per_item_cap']} {values['currency']}"
-                    )
-
-                if values.get("pack_cap"):
-                    st.write(
-                        f"Pack Cap: {values['pack_cap']} {values['currency']}"
-                    )
-
-                st.markdown("---")
-
-
-def render_standard_premium(premium: dict):
-    if not premium:
-        return
-
-    st.markdown("### Standard Insurance Premium")
-    cols = st.columns(len(premium))
-
-    for col, (period, values) in zip(cols, premium.items()):
-        with col:
-            st.markdown(f"**{period.replace('_', ' ').title()}**")
-
-            if "annual_premium" in values:
-                st.write(
-                    f"Annual Premium: **{values['annual_premium']} {values['currency']}**"
-                )
+def render_pricing_cards(insurance_data: dict):
+    """
+    Render pricing cards for UAE products (3 options) or Tunisia (2 options)
+    
+    NEW LOGIC:
+    - UAE: Standard 12m, Standard 24m, ASSURMAX
+    - Tunisia: Standard 12m, Standard 24m only
+    """
+    market = insurance_data.get("market", "UAE")
+    
+    # Standard premiums (always present)
+    std_12 = insurance_data.get("standard_premium_12_months", {})
+    std_24 = insurance_data.get("standard_premium_24_months", {})
+    
+    # ASSURMAX premium (UAE only)
+    assurmax = insurance_data.get("assurmax_premium", {})
+    
+    st.markdown("### 💰 Insurance Pricing Options")
+    
+    if market == "UAE" and assurmax and assurmax.get("amount"):
+        # UAE: Show 3 options
+        cols = st.columns(3)
+        
+        # Card 1: Standard 12-month
+        with cols[0]:
+            st.markdown("#### 📅 Standard (12 Months)")
+            st.markdown(f"### {std_12.get('amount', 'N/A')} {std_12.get('currency', 'AED')}")
+            st.caption("Annual coverage with standard benefits")
+        
+        # Card 2: Standard 24-month
+        with cols[1]:
+            st.markdown("#### 📅 Standard (24 Months)")
+            st.markdown(f"### {std_24.get('amount', 'N/A')} {std_24.get('currency', 'AED')}")
+            st.caption("2-year coverage with standard benefits")
+        
+        # Card 3: ASSURMAX
+        with cols[2]:
+            st.markdown("#### ⚡ ASSURMAX")
+            
+            if assurmax.get("eligible") == False:
+                # Product exceeds ASSURMAX cap
+                st.warning("Not Eligible")
+                st.caption(assurmax.get("reason", "Product exceeds ASSURMAX cap"))
             else:
-                st.write(
-                    f"Total Premium: **{values['total_premium']} {values['currency']}**"
-                )
+                st.markdown(f"### {assurmax.get('amount', 'N/A')} {assurmax.get('currency', 'AED')}")
+                st.markdown(f"📦 **Pack Cap:** {assurmax.get('pack_cap', 'N/A')} {assurmax.get('currency', 'AED')}")
+                st.markdown(f"🎯 **Max Products:** {assurmax.get('max_products', 'N/A')}")
+    
+    else:
+        # Tunisia or UAE without ASSURMAX: Show 2 options
+        cols = st.columns(2)
+        
+        # Card 1: Standard 12-month
+        with cols[0]:
+            st.markdown("#### 📅 Standard (12 Months)")
+            st.markdown(f"### {std_12.get('amount', 'N/A')} {std_12.get('currency', 'TND' if market == 'Tunisia' else 'AED')}")
+            st.caption("Annual coverage with standard benefits")
+        
+        # Card 2: Standard 24-month
+        with cols[1]:
+            st.markdown("#### 📅 Standard (24 Months)")
+            st.markdown(f"### {std_24.get('amount', 'N/A')} {std_24.get('currency', 'TND' if market == 'Tunisia' else 'AED')}")
+            st.caption("2-year coverage with standard benefits")
 
-# ------------------------------------------------------------------
-# App UI
-# ------------------------------------------------------------------
-st.title("Garanty Affinity Insurance")
+
+# ============================================================
+# MAIN APP UI
+# ============================================================
+
+st.title("🛡️ Garanty Affinity Insurance")
+
 
 website_url = st.text_input(
     "E-commerce Website URL:",
-    placeholder="https://www.noon.com"
+    placeholder="https://www.noon.com",
+    help="Enter the URL of the e-commerce website to scrape"
 )
 
-if st.button("Generate Insurance Quotes", type="primary"):
+max_products = st.slider(
+    "Maximum products to process:",
+    min_value=5,
+    max_value=50,
+    value=10,
+    step=5,
+    help="Limit processing for faster results"
+)
+
+if st.button("🚀 Generate Insurance Quotes", type="primary"):
 
     if not website_url:
-        st.warning("Please enter a URL")
+        st.warning("⚠️ Please enter a URL")
         st.stop()
 
     if not website_url.startswith(("http://", "https://")):
-        st.error("URL must start with http:// or https://")
+        st.error("❌ URL must start with http:// or https://")
         st.stop()
 
     try:
-       
+        # ==========================================
+        # STEP 1: Import Modules
+        # ==========================================
         current_dir = Path(__file__).parent
         
-        # Add paths to sys.path dynamically
         if str(current_dir) not in sys.path:
             sys.path.insert(0, str(current_dir))
         if str(current_dir.parent) not in sys.path:
             sys.path.insert(0, str(current_dir.parent))
         
-        
         try:
             from scrapper.Scrapper import crawl_entire_site, save_products
         except ImportError as e:
-            st.error(f"Cannot import scrapper module: {e}")
+            st.error(f"❌ Cannot import scrapper module: {e}")
             st.stop()
         
         try:
-            from main_workflow import run_workflow_from_json
+            from main_workflow_optimised import run_workflow_from_json
         except ImportError as e:
-            st.error(f"Cannot import workflow module: {e}")
+            st.error(f"❌ Cannot import workflow module: {e}")
             st.stop()
         
+        try:
+            from database.models import SessionLocal, Product, InsurancePackage
+            from database.crud import get_partner_by_name, get_processing_stats
+        except ImportError as e:
+            st.error(f"❌ Cannot import database modules: {e}")
+            st.stop()
         
-        with st.spinner("Scraping website..."):
+        # ==========================================
+        # STEP 2: Scrape Website
+        # ==========================================
+        with st.spinner("🔍 Scraping website..."):
             products = crawl_entire_site(website_url)
 
         if not products:
-            st.error("No valid product pages detected.")
+            st.error("❌ No valid product pages detected.")
             st.stop()
 
-        st.success(f"Found {len(products)} products")
+        st.success(f"✅ Found {len(products)} products")
 
-        
+        # ==========================================
+        # STEP 3: Save Products to JSON
+        # ==========================================
         filename = save_products(products, website_url)
         if not filename:
-            st.error("Failed to save products.")
+            st.error("❌ Failed to save products.")
             st.stop()
 
-       
-        with st.spinner("Generating insurance packages..."):
-            results_file = run_workflow_from_json(filename, max_products=8)
+        # ==========================================
+        # STEP 4: Process with AI Workflow
+        # ==========================================
+        with st.spinner(f"🤖 Processing {max_products} products with AI..."):
+            result = run_workflow_from_json(filename, max_products=max_products)
 
-        if not results_file:
-            st.error("Insurance generation failed.")
+        if not result or not result.get("success"):
+            st.error("❌ Insurance generation failed.")
             st.stop()
 
+        # ==========================================
+        # STEP 5: Read Results from DATABASE
+        # ==========================================
+        st.success("✅ Processing complete! Loading results from database...")
         
-        with open(results_file, "r", encoding="utf-8") as f:
-            results = json.load(f)
-
-        packages = results.get("packages", [])
-        eligible = [p for p in packages if p.get("eligible")]
-        not_eligible = [p for p in packages if not p.get("eligible")]
-
+        db = SessionLocal()
         
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Products Processed", len(packages))
-        c2.metric("Eligible", len(eligible))
-        c3.metric("Not Eligible", len(not_eligible))
-
-        st.markdown("---")
-
-        # ----------------------------------------------------------
-        # Eligible products
-        # ----------------------------------------------------------
-        if eligible:
-            st.subheader("Products with Insurance Coverage")
-
-            for idx, pkg in enumerate(eligible[:10], 1):
-               
+        try:
+            # Get partner info
+            partner_id = result["partner_id"]
+            partner_name = result["partner_name"]
+            
+            # Query processed products from database
+            processed_products = db.query(
+                Product.product_name,
+                Product.brand,
+                Product.price,
+                Product.currency,
+                Product.category,
+                Product.description,
+                InsurancePackage.package_data,
+                InsurancePackage.status  # ✅ Correct column name
+            ).join(
+                InsurancePackage,
+                Product.product_id == InsurancePackage.product_id
+            ).filter(
+                Product.partner_id == partner_id,
+                Product.processing_status == 'completed'
+            ).order_by(
+                Product.processing_completed_at.desc()
+            ).limit(max_products).all()
+            
+            # Separate eligible and not eligible
+            eligible = []
+            not_eligible = []
+            
+            for row in processed_products:
+                pkg_data = row.package_data
                 
-                insurance = pkg.get("insurance_package", {})
+                # Add product info to package data
+                pkg_data["product"] = {
+                    "name": row.product_name,
+                    "brand": row.brand,
+                    "price": float(row.price) if row.price else 0.0,
+                    "currency": row.currency,
+                    "category": row.category,
+                    "description": row.description
+                }
                 
+                # ✅ Check eligibility from package_data (where it's actually stored)
+                is_eligible = False
                 
-                agent_product = insurance.get("product", {})
+                # Method 1: Check classification.eligible (most common)
+                if pkg_data.get("classification", {}).get("eligible") is True:
+                    is_eligible = True
                 
-               
-                if not agent_product:
-                    agent_product = pkg.get("product", {})
+                # Method 2: Check root level eligible
+                elif pkg_data.get("eligible") is True:
+                    is_eligible = True
                 
-                # Get product name from either source
-                product_name = agent_product.get("name") or agent_product.get("product_name") or "Unknown"
+                # Method 3: Check if premium data exists (means eligible)
+                elif (pkg_data.get("standard_premium_12_months") and 
+                      pkg_data.get("standard_premium_12_months", {}).get("amount")):
+                    is_eligible = True
                 
-                with st.expander(f"#{idx} - {product_name[:70]}"):
-                    st.markdown("### Product Information")
-
-                    c1, c2 = st.columns(2)
-                    with c1:
-                        st.write(f"**Name:** {agent_product.get('name', agent_product.get('product_name', 'N/A'))}")
-                        st.write(f"**Brand:** {agent_product.get('brand', 'N/A')}")
-                        # This shows the INFERRED category from the agent, not 'N/A'
-                        st.write(f"**Category:** {agent_product.get('category', 'N/A')}")
-                    with c2:
-                        st.write(f"**Price:** {agent_product.get('price', 'N/A')} {agent_product.get('currency', 'AED')}")
-                        st.write(f"**Market:** {insurance.get('market', 'N/A')}")
-                        st.write(f"**Risk Profile:** {insurance.get('risk_profile', 'N/A')}")
-                        
-                        # Show value bucket if available
-                        if insurance.get("value_bucket"):
-                            st.write(f"**Value Bucket:** {insurance['value_bucket']}")
-
-                    # Show description if available
-                    description = agent_product.get('description')
-                    if description and description != 'N/A':
-                        st.markdown("---")
-                        st.markdown("#### Product Description")
-                        st.write(description)
-
-                    st.markdown("---")
-
-                    # Insurance rendering
-                    doc_type = insurance.get("document_type")
-
-                    if doc_type == "ASSURMAX":
-                        render_assurmax_plans(insurance.get("plans", {}))
-                        st.markdown("---")
-                        render_coverage_modules(insurance.get("coverage_modules", []))
-                        render_exclusions(insurance.get("exclusions", []))
-                    elif doc_type == "STANDARD":
-                        render_standard_premium(insurance.get("premium", {}))
-                        st.markdown("---")
-                        render_coverage_modules(insurance.get("coverage_modules", []))
-                        render_exclusions(insurance.get("exclusions", []))
-                    else:
-                        st.warning(f"Unknown insurance document type: {doc_type}")
-
-        else:
-            st.info("No products were eligible for insurance.")
-
-        # ----------------------------------------------------------
-        # Not eligible products
-        # ----------------------------------------------------------
-        if not_eligible:
+                # Method 4: Check status column (as fallback)
+                elif row.status == "eligible":
+                    is_eligible = True
+                
+                if is_eligible:
+                    eligible.append(pkg_data)
+                else:
+                    not_eligible.append(pkg_data)
+            
+            # ==========================================
+            # STEP 6: Display Metrics
+            # ==========================================
             st.markdown("---")
-            st.subheader("Products Not Eligible for Insurance")
+            st.subheader(f"📊 Results for {partner_name}")
+            
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("Products Processed", len(processed_products))
+            c2.metric("✅ Eligible", len(eligible))
+            c3.metric("❌ Not Eligible", len(not_eligible))
+            c4.metric("⏱️ Time", f"{result.get('processing_time', 'N/A')}s")
 
-            for idx, pkg in enumerate(not_eligible[:10], 1):
-                insurance = pkg.get("insurance_package", {})
-                agent_product = insurance.get("product", {})
-                
-                if not agent_product:
-                    agent_product = pkg.get("product", {})
-                
-                product_name = agent_product.get("name") or agent_product.get("product_name") or "Unknown"
-                
-                with st.expander(f"#{idx} - {product_name[:60]}"):
-                    # Show product info
-                    st.write(f"**Name:** {agent_product.get('name', agent_product.get('product_name', 'N/A'))}")
-                    st.write(f"**Brand:** {agent_product.get('brand', 'N/A')}")
-                    st.write(f"**Category:** {agent_product.get('category', 'N/A')}")
-                    st.write(f"**Price:** {agent_product.get('price', 'N/A')} {agent_product.get('currency', 'AED')}")
+            st.markdown("---")
+
+            # ==========================================
+            # STEP 7: Display Eligible Products
+            # ==========================================
+            if eligible:
+                st.subheader("✅ Products with Insurance Coverage")
+
+                for idx, insurance in enumerate(eligible, 1):
+                    product = insurance.get("product", {})
+                    product_name = product.get("name", "Unknown")
                     
-                    # Show description if available
-                    description = agent_product.get('description')
-                    if description and description != 'N/A':
+                    with st.expander(f"#{idx} - {product_name[:70]}"):
+                        st.markdown("### 📦 Product Information")
+
+                        c1, c2 = st.columns(2)
+                        with c1:
+                            st.write(f"**Name:** {product.get('name', 'N/A')}")
+                            st.write(f"**Brand:** {product.get('brand', 'N/A')}")
+                            st.write(f"**Category:** {product.get('category', 'N/A')}")
+                        with c2:
+                            st.write(f"**Price:** {product.get('price', 'N/A')} {product.get('currency', 'AED')}")
+                            st.write(f"**Market:** {insurance.get('market', 'N/A')}")
+                            st.write(f"**Risk Profile:** {insurance.get('risk_profile', 'N/A')}")
+
+                        # Description
+                        description = product.get('description')
+                        if description and description not in ['N/A', '', None]:
+                            st.markdown("---")
+                            st.markdown("#### 📝 Product Description")
+                            st.write(description)
+
                         st.markdown("---")
-                        st.markdown("#### Product Description")
-                        st.write(description)
+
+                        # Pricing Cards (NEW)
+                        render_pricing_cards(insurance)
+                        
                         st.markdown("---")
+                        
+                        # Coverage Details
+                        render_coverage_modules(insurance.get("coverage_modules", []))
+                        render_exclusions(insurance.get("exclusions", []))
+
+            else:
+                st.info("ℹ️ No products were eligible for insurance.")
+
+            # ==========================================
+            # STEP 8: Display Not Eligible Products
+            # ==========================================
+            if not_eligible:
+                st.markdown("---")
+                st.subheader("❌ Products Not Eligible for Insurance")
+
+                for idx, insurance in enumerate(not_eligible, 1):
+                    product = insurance.get("product", {})
+                    product_name = product.get("name", "Unknown")
                     
-                    reason = insurance.get("reason", "Not eligible")
-                    st.error(f"**Reason for ineligibility:** {reason}")
-                    
-                    # Show any available insurance info
-                    if insurance.get('risk_profile'):
-                        st.info(f"**Risk Profile:** {insurance['risk_profile']}")
-                    if insurance.get('market'):
-                        st.info(f"**Market:** {insurance['market']}")
+                    with st.expander(f"#{idx} - {product_name[:60]}"):
+                        st.write(f"**Name:** {product.get('name', 'N/A')}")
+                        st.write(f"**Brand:** {product.get('brand', 'N/A')}")
+                        st.write(f"**Category:** {product.get('category', 'N/A')}")
+                        st.write(f"**Price:** {product.get('price', 'N/A')} {product.get('currency', 'AED')}")
+                        
+                        description = product.get('description')
+                        if description and description not in ['N/A', '', None]:
+                            st.markdown("---")
+                            st.markdown("#### 📝 Product Description")
+                            st.write(description)
+                            st.markdown("---")
+                        
+                        # Get reason from classification or root level
+                        reason = (
+                            insurance.get("classification", {}).get("reason") or
+                            insurance.get("reason") or
+                            "Not eligible for insurance"
+                        )
+                        st.error(f"**Reason:** {reason}")
+                        
+                        if insurance.get('risk_profile'):
+                            st.info(f"**Risk Profile:** {insurance['risk_profile']}")
+                        if insurance.get('market'):
+                            st.info(f"**Market:** {insurance['market']}")
+            
+            # ==========================================
+            # STEP 9: Download Results
+            # ==========================================
+            st.markdown("---")
+            st.subheader("📥 Download Results")
+            
+            import json
+            
+            download_data = {
+                "metadata": {
+                    "partner": partner_name,
+                    "processed_at": datetime.utcnow().isoformat(),
+                    "total_products": len(processed_products),
+                    "eligible": len(eligible),
+                    "not_eligible": len(not_eligible),
+                    "assurmax_version": "Simplified (5000 AED cap, 550 AED premium)"
+                },
+                "eligible_products": eligible,
+                "not_eligible_products": not_eligible
+            }
+            
+            st.download_button(
+                label="📄 Download JSON Report",
+                data=json.dumps(download_data, indent=2, ensure_ascii=False),
+                file_name=f"{partner_name}_insurance_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                mime="application/json"
+            )
+        
+        finally:
+            db.close()
 
     except Exception as e:
         import traceback
-        st.error(f"Unexpected error occurred: {str(e)}")
-        st.code(traceback.format_exc())
+        st.error(f"❌ Unexpected error occurred: {str(e)}")
+        with st.expander("🔍 Show Error Details"):
+            st.code(traceback.format_exc())
+

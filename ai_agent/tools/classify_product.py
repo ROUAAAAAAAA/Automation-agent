@@ -1,4 +1,3 @@
-
 from langchain_core.tools import tool
 from typing import Union, List, Dict
 from langchain_core.documents import Document
@@ -6,14 +5,20 @@ from langchain_openai import ChatOpenAI
 import os
 import json
 import dotenv
+
+import sys
+import os
+from pathlib import Path
+
+# Add project root to Python path
+project_root = Path(__file__).parent.parent.parent  # Go up 3 levels
+sys.path.insert(0, str(project_root))
 dotenv.load_dotenv()
 
-
-
 def infer_category_with_llm(product_name: str, description: str, brand: str) -> str:
-    """Use LLM to infer product category."""
+    """Use LLM to infer product category if missing."""
     llm = ChatOpenAI(
-        model="gpt-5-mini-2025-08-07",
+        model="gpt-4o-mini",
         temperature=0,
         openai_api_key=os.getenv("OPENAI_API_KEY")
     )
@@ -30,6 +35,8 @@ Examples:
 - "Kitchen knives" → "Kitchenware"
 - "MacBook Air" → "Laptop"
 - "Bluetooth speaker" → "Audio Equipment"
+- "Samsung TV" → "Television"
+- "PlayStation 5" → "Gaming Console"
 
 Category:"""
     
@@ -38,180 +45,176 @@ Category:"""
         category = response.content.strip().replace('"', '').replace("'", "")
         return category if len(category) < 50 else "General Product"
     except Exception as e:
-        print(f" Category inference failed: {e}")
+        print(f"⚠️ Category inference failed: {e}")
         return "General Product"
 
 
-
-def analyze_eligibility_with_llm(product_name: str, category: str, documents: List[Document]) -> Dict:
+def analyze_eligibility_with_llm(
+    product_name: str, 
+    category: str, 
+    brand: str,
+    price: float,
+    currency: str,
+    documents: List[Document]
+) -> Dict:
     """
     Use LLM to analyze retrieved documents and determine eligibility.
-    Returns structured classification result.
+    
+    Returns structured classification with:
+    - eligible: bool
+    - reason: str
+    - risk_profile: str (e.g., "ELECTRONIC_PRODUCTS")
+    - document_type: "STANDARD" (always - workflow handles ASSURMAX logic)
+    - coverage_modules: list
+    - exclusions: list
     """
     llm = ChatOpenAI(
-        model="gpt-5-mini-2025-08-07",
+        model="gpt-4o-mini",
         temperature=0,
         openai_api_key=os.getenv("OPENAI_API_KEY")
     )
     
-    # Format documents for LLM with document type labels
+    # Format documents for LLM
     docs_text = ""
-    has_assurmax_doc = False
+    doc_filenames = []
     
-    for i, doc in enumerate(documents[:5]):
+    for i, doc in enumerate(documents[:6]):  # Limit to 6 most relevant docs
         filename = doc.metadata.get('file_name', 'Unknown')
-        
-        # Identify document type
-        if 'assurmax' in filename.lower():
-            doc_type = " ASSURMAX PRICING DOCUMENT"
-            has_assurmax_doc = True
-        elif 'garantyaffinity' in filename.lower():
-            doc_type = " STANDARD SPECIFICATION DOCUMENT"
-        else:
-            doc_type = " DOCUMENT"
-        
-        docs_text += f"\n\n--- {doc_type} {i+1}: {filename} ---\n{doc.page_content}\n"
+        doc_filenames.append(filename)
+        docs_text += f"\n\n{'='*70}\n[DOCUMENT {i+1}]: {filename}\n{'='*70}\n{doc.page_content}\n"
     
-    prompt = f"""You are analyzing insurance specification documents to determine if a product is eligible for coverage.
+    # Determine market
+    market = "UAE" if currency == "AED" else "Tunisia"
+    
+    # Build prompt
+    prompt = f"""You are an insurance product classifier. Analyze the specification documents to determine if a product is eligible for insurance coverage.
 
-PRODUCT TO ANALYZE:
-- Name: {product_name}
-- Category: {category}
+PRODUCT TO CLASSIFY:
+==================
+Name: {product_name}
+Category: {category}
+Brand: {brand}
+Price: {price} {currency}
+Market: {market}
 
 SPECIFICATION DOCUMENTS:
+==================
 {docs_text}
 
-CRITICAL INSTRUCTIONS:
-STEP 0: DETERMINE IF THIS IS A LUXURY PRODUCT
-- Check brand: Is it a luxury brand? (Gucci, Prada, Louis Vuitton, Rolex, Cartier, etc.)
-- Check price: Is price ≥ 3000 AED or equivalent? 
-- Check category/description: Does it sound like luxury/premium item?
-- If ANY of these are true → This is likely a LUXURY product that needs OPULENCIA_PREMIUM spec
+YOUR TASK:
+==================
 
+STEP 1: FIND MATCHING SPECIFICATION
+- Read all specification documents above
+- Find the document whose "Eligible Products" section matches this product's category
+- Use the MOST SPECIFIC matching specification
 
+STEP 2: CHECK ELIGIBILITY
+- Is the product category listed in "Eligible Products" or "Included Products"?
+- Does it meet any price requirements mentioned?
+- Check "Exclusions" - is the product explicitly excluded?
+- Result: eligible = true if product matches eligible list AND not excluded
 
-STEP 1: Find the STANDARD SPECIFICATION document (GarantyAffinity_...)
-- This document tells you IF the product is eligible
-- Extract: risk_profile, coverage_modules, exclusions
-- Use the document that matches the product category and market
-- If product is LUXURY → Look for OPULENCIA_PREMIUM document (mentions "Opulencia", "Premium", "Luxury")
+STEP 3: EXTRACT DETAILS (from matching specification)
+- risk_profile: Extract the exact risk profile code
+  Examples: "ELECTRONIC_PRODUCTS", "HOME_APPLIANCES", "BAGS_LUGGAGE_ESSENTIAL", "OPULENCIA_PREMIUM"
+- coverage_modules: List of coverage types (Accidental Damage, Theft, etc.)
+- exclusions: List of what's NOT covered
+- document_used: Filename of the specification document you used
 
-STEP 2: Look for ASSURMAX PRICING documents (ASSURMAX_...)
-- These documents contain CAPS/LIMITS for maximum coverage
-- Look for text like:
-  * "Per Item Cap: X AED"
-  * "Pack Cap: Y AED"
-  * "ASSURMAX: X AED"
-  * "ASSURMAX+: Y AED"
-- If you find ANY ASSURMAX document, you MUST extract the caps
+IMPORTANT RULES:
+==================
+✅ Match by CATEGORY, not by price
+   - If category is in the eligible list → eligible (even if price is high)
+   
+✅ Ignore ASSURMAX pricing documents for eligibility
+   - ASSURMAX documents only contain pricing caps
+   - Use STANDARD specification documents for eligibility check
+   
+✅ Always return document_type as "STANDARD"
+   - The workflow will determine ASSURMAX eligibility separately
+   - Your job is to determine if product is insurable at all
+   
+✅ Common eligible categories:
+   - Electronics: Smartphones, Laptops, Tablets, TVs, Smartwatches, Gaming Consoles
+   - Home: Washing machines, Refrigerators, Ovens, Dishwashers
+   - Baby: Strollers, Car seats, Cribs
+   - Sports: Bicycles, Treadmills, Fitness equipment
+   - Bags/Luggage: Suitcases, Backpacks, Handbags
+   
+❌ Common INELIGIBLE categories:
+   - Beauty & Cosmetics (makeup, perfume, skincare)
+   - Food & Beverages
+   - Clothing & Footwear (unless textile spec exists)
+   - Books & Media
+   - Consumables
 
-STEP 3: Build the response
-- eligible: true/false (from STANDARD doc)
-- risk_profile: CODE from STANDARD doc (e.g., ELECTRONIC_PRODUCTS)
-- coverage_modules: from STANDARD doc
-- exclusions: from STANDARD doc
-- assurmax_caps: from ASSURMAX doc (if present)
+RESPONSE FORMAT:
+==================
+Return ONLY a valid JSON object (no markdown, no code blocks):
 
-ASSURMAX CAPS FORMAT:
-If you find ASSURMAX caps, return:
-{{
-  "ASSURMAX": {{
-    "per_item_cap_AED": <number>,
-    "pack_cap_AED": <number>
-  }},
-  "ASSURMAX+": {{
-    "per_item_cap_AED": <number>,
-    "pack_cap_AED": <number>
-  }}
-}}
-
-If no ASSURMAX document found or no caps mentioned, return:
-"assurmax_caps": null
-
-CRITICAL: You MUST return ONLY a valid JSON object, nothing else. No explanations, no markdown, just JSON.
-
-JSON FORMAT:
 {{
   "eligible": true or false,
-  "reason": "Clear explanation if not eligible, or 'Product is covered' if eligible",
-  "risk_profile": "Exact risk profile code from STANDARD document",
-  "document_used": "Filename of the STANDARD document used for eligibility decision",
+  "reason": "Clear explanation of why eligible/not eligible and which specification was used",
+  "risk_profile": "EXACT_RISK_PROFILE_CODE" or null,
+  "document_used": "filename.pdf" or null,
   "document_type": "STANDARD",
-  "coverage_modules": ["Module 1", "Module 2"],
-  "exclusions": ["Exclusion 1", "Exclusion 2"],
-  "assurmax_caps": null or {{"ASSURMAX": {{...}}, "ASSURMAX+": {{...}}}}
+  "coverage_modules": ["Module 1", "Module 2", ...],
+  "exclusions": ["Exclusion 1", "Exclusion 2", ...]
 }}
 
-Return ONLY the JSON object above with actual values filled in. Do not include any other text.
-"""
+JSON Response:"""
     
     try:
         response = llm.invoke(prompt)
         content = response.content.strip()
         
-        # Remove markdown code blocks if present
+        # Clean JSON formatting
         if content.startswith("```json"):
             content = content.replace("```json", "").replace("```", "").strip()
         elif content.startswith("```"):
             content = content.replace("```", "").strip()
         
-        # Try to parse JSON
+        # Parse JSON
         result = json.loads(content)
         
-        # Validate required fields
-        if "eligible" not in result:
-            result["eligible"] = False
-        if "reason" not in result:
-            result["reason"] = "Unknown reason"
-        if "risk_profile" not in result:
-            result["risk_profile"] = None
-        if "document_type" not in result:
-            result["document_type"] = "STANDARD"
-        if "coverage_modules" not in result:
-            result["coverage_modules"] = []
-        if "exclusions" not in result:
-            result["exclusions"] = []
-        if "assurmax_caps" not in result:
-            result["assurmax_caps"] = None
+        # Validate and set defaults
+        result.setdefault("eligible", False)
+        result.setdefault("reason", "Unknown reason")
+        result.setdefault("risk_profile", None)
+        result.setdefault("document_used", None)
+        result.setdefault("document_type", "STANDARD")
+        result.setdefault("coverage_modules", [])
+        result.setdefault("exclusions", [])
         
-        #  ASSURMAX DETECTION LOGIC
-        if result.get("assurmax_caps") and result.get("document_type") == "STANDARD":
-            # If ASSURMAX caps found, update document type
-            result["document_type"] = "ASSURMAX"
-            print("    ASSURMAX caps detected - switching to ASSURMAX document type")
-        elif not result.get("assurmax_caps") and has_assurmax_doc:
-            #  ASSURMAX doc was retrieved but LLM didn't extract caps
-            print("    WARNING: ASSURMAX document retrieved but no caps extracted!")
-            print("    LLM may have missed the caps in the document")
+        # Force document_type to STANDARD (workflow handles ASSURMAX)
+        result["document_type"] = "STANDARD"
         
         return result
         
     except json.JSONDecodeError as e:
-        print(f" LLM returned invalid JSON. Raw response:")
-        print(f"   {response.content[:500]}")
+        print(f"❌ LLM returned invalid JSON: {e}")
+        print(f"Response was: {content[:200]}...")
         return {
             "eligible": False,
-            "reason": f"Failed to parse LLM response: {str(e)}",
+            "reason": f"Failed to parse classification response: {str(e)}",
             "risk_profile": None,
             "document_used": None,
             "document_type": "STANDARD",
             "coverage_modules": [],
-            "exclusions": [],
-            "assurmax_caps": None
+            "exclusions": []
         }
     except Exception as e:
-        print(f" Eligibility analysis failed: {e}")
+        print(f"❌ Classification error: {e}")
         return {
             "eligible": False,
-            "reason": f"Analysis error: {str(e)}",
+            "reason": f"Classification error: {str(e)}",
             "risk_profile": None,
             "document_used": None,
             "document_type": "STANDARD",
             "coverage_modules": [],
-            "exclusions": [],
-            "assurmax_caps": None
+            "exclusions": []
         }
-
 
 
 @tool
@@ -224,15 +227,30 @@ def classify_product(
     description: str = ""
 ) -> dict:
     """
-    Smart product classification tool.
+    Classify product and determine insurance eligibility.
     
-    This tool does ALL the work:
-    1. Infers category if missing
-    2. Retrieves relevant specification documents
+    This tool:
+    1. Infers category if missing (using LLM)
+    2. Retrieves relevant specification documents from RAG
     3. Analyzes eligibility using LLM
-    4. Returns structured classification result
+    4. Returns structured classification
     
-    The agent just needs to use the returned data.
+    The workflow then decides:
+    - Calculate STANDARD pricing (always)
+    - Calculate ASSURMAX pricing (if UAE electronics ≤ 5000 AED)
+    
+    Args:
+        product_name: Name of the product
+        category: Product category (inferred if missing)
+        brand: Brand name
+        price: Product price
+        currency: AED (UAE) or TND (Tunisia)
+        description: Product description
+    
+    Returns:
+        dict with:
+        - product info (name, brand, category, price, currency, market)
+        - classification (eligible, reason, risk_profile, document_type, coverage_modules, exclusions)
     """
     # Convert price
     try:
@@ -243,115 +261,73 @@ def classify_product(
     # Determine market
     market = "UAE" if currency == "AED" else "Tunisia" if currency == "TND" else "UAE"
     
+    # ==========================================
     # STEP 1: INFER CATEGORY IF MISSING
+    # ==========================================
     original_category = category
-    if not category or category in ["N/A", "", "Unknown", "General", None]:
-        print(f" Inferring category for: {product_name[:50]}...")
+    if not category or category.strip() in ["N/A", "", "Unknown", "General", "None"]:
+        print(f"🔍 Inferring category for: {product_name[:50]}...")
         category = infer_category_with_llm(product_name, description, brand)
-        print(f" Category: '{original_category or 'N/A'}' → '{category}'")
+        print(f"   ✅ Category: '{original_category or 'N/A'}' → '{category}'")
     
     print(f"\n{'='*70}")
-    print(f" CLASSIFYING: {product_name}")
-    print(f"   Category: {category} | Market: {market} | Price: {price_float} {currency}")
+    print(f"📦 CLASSIFYING PRODUCT")
+    print(f"{'='*70}")
+    print(f"Name: {product_name[:60]}")
+    print(f"Category: {category}")
+    print(f"Brand: {brand or 'N/A'}")
+    print(f"Price: {price_float} {currency}")
+    print(f"Market: {market}")
     print(f"{'='*70}\n")
-    # ===== ADDED LUXURY CLASSIFICATION LOGIC =====
-    is_luxury_product = False
     
-    # Luxury brands list
-    luxury_brands = ["gucci", "prada", "louis vuitton", "lv", "rolex", "cartier", 
-                     "omega", "tiffany", "hermes", "chanel", "dior", "versace",
-                     "burberry", "givenchy", "balenciaga", "chloe", "chloé", "fendi"]
-    
-    # Luxury categories/keywords
-    luxury_categories = ["luxury", "premium", "watch", "jewelry", "handbag", "leather",
-                        "watches", "jewellery", "briefcase", "trunk", "luggage"]
-    
-    # Convert price to AED for comparison
-    price_in_aed = price_float
-    if currency == "USD" and price_float > 0:
-        price_in_aed = price_float * 3.67  # Approximate conversion
-    
-    # Check 1: Brand-based luxury detection
-    if brand:
-        brand_lower = brand.lower()
-        for luxury_brand in luxury_brands:
-            if luxury_brand in brand_lower:
-                if price_in_aed >= 3000:
-                    is_luxury_product = True
-                    print(f"  LUXURY DETECTED: Brand '{brand}' at {price_float} {currency} (~{price_in_aed:.0f} AED)")
-                break
-    
-    # Check 2: Category-based luxury detection
-    if not is_luxury_product and category:
-        category_lower = category.lower()
-        for luxury_cat in luxury_categories:
-            if luxury_cat in category_lower:
-                if price_in_aed >= 3000:
-                    is_luxury_product = True
-                    print(f"  LUXURY DETECTED: Category '{category}' at {price_float} {currency} (~{price_in_aed:.0f} AED)")
-                break
-    
-    # Check 3: Description-based luxury detection
-    if not is_luxury_product and description:
-        desc_lower = description.lower()
-        if any(word in desc_lower for word in ["luxury", "premium", "high-end", "designer"]):
-            if price_in_aed >= 3000:
-                is_luxury_product = True
-                print(f"  LUXURY DETECTED: Description indicates luxury at {price_float} {currency} (~{price_in_aed:.0f} AED)")
-    # ===== END LUXURY CLASSIFICATION =====
-    #  STEP 2: RETRIEVE SPECIFICATION DOCUMENTS
+    # ==========================================
+    # STEP 2: RETRIEVE SPECIFICATION DOCUMENTS
+    # ==========================================
     from ai_agent.rag.retriever import retrieve_specs_raw
     
-    all_docs = []
-    
-    # Query 1: Get GarantyAffinity document
-    if is_luxury_product:
-        # Prioritize OPULENCIA for luxury products
-        query1 = f"OPULENCIA PREMIUM LUXURY {brand or ''} {category} {market} specification eligible products"
-        print(f" QUERY 1 (LUXURY PRIORITY): {query1}")
-    else:
-        query1 = f"{product_name} {category} {brand} {market} {currency} GarantyAffinity specification risk profile eligible products"
-        print(f" QUERY 1 (GarantyAffinity): {query1}")
+    # Build search query
+    query = f"{product_name} {category} {brand} {market} insurance specification eligible coverage"
+    print(f"🔍 Retrieving specifications...")
+    print(f"   Query: {query[:80]}...")
     
     try:
-        docs1 = retrieve_specs_raw(query1, k=3)
-        all_docs.extend(docs1)
-        print(f"    Retrieved {len(docs1)} documents")
+        docs = retrieve_specs_raw(query, k=6)
+        print(f"   ✅ Retrieved {len(docs)} documents")
     except Exception as e:
-        print(f"    Query 1 failed: {e}")
-    
-    
-    # Query 2: Get ASSURMAX document if applicable
-    assurmax_keywords = ["phone","smartwatches","smartphone", "laptop", "tablet", "tv", "watch", "jewelry", "clothing", "electronics", "luxury", "textile","footwear","console","audio"]
-    if any(kw in (product_name + " " + category + " " + description).lower() for kw in assurmax_keywords):
-        query2 = f"{product_name} {category} {brand} {market} {currency} ASSURMAX pricing caps"
-        print(f" QUERY 2 (ASSURMAX): {query2}")
-        
-        try:
-            docs2 = retrieve_specs_raw(query2, k=3)
-            all_docs.extend(docs2)
-            print(f"    Retrieved {len(docs2)} documents")
-        except Exception as e:
-            print(f"    Query 2 failed: {e}")
+        print(f"   ❌ Retrieval failed: {e}")
+        docs = []
     
     # Remove duplicates
     seen_files = set()
     unique_docs = []
-    for doc in all_docs:
+    for doc in docs:
         filename = doc.metadata.get('file_name', '')
         if filename and filename not in seen_files:
             seen_files.add(filename)
             unique_docs.append(doc)
     
-    # Sort: GarantyAffinity first
-    unique_docs.sort(key=lambda d: 0 if 'garantyaffinity' in d.metadata.get('file_name', '').lower() else 1)
+    # Sort: STANDARD specs first (they have eligibility info)
+    def sort_key(doc):
+        filename = doc.metadata.get('file_name', '').lower()
+        if 'garantyaffinity' in filename or 'dev_spec' in filename:
+            return 0  # STANDARD specs (highest priority)
+        elif 'opulencia' in filename:
+            return 1  # OPULENCIA (also good for eligibility)
+        elif 'assurmax' in filename:
+            return 2  # ASSURMAX (reference only, not for eligibility)
+        else:
+            return 3
     
-    print(f"\n Retrieved {len(unique_docs)} unique documents:")
+    unique_docs.sort(key=sort_key)
+    
+    print(f"\n📚 Using {len(unique_docs)} unique documents:")
     for doc in unique_docs:
-        print(f"   - {doc.metadata.get('file_name', 'Unknown')}")
+        filename = doc.metadata.get('file_name', 'Unknown')
+        doc_type = "📋" if any(x in filename.lower() for x in ['garantyaffinity', 'dev_spec', 'opulencia']) else "⚡"
+        print(f"   {doc_type} {filename}")
     
     if not unique_docs:
-        print(f" No specification documents found for {category}\n")
+        print(f"\n⚠️ No specification documents found for category '{category}'\n")
         return {
             "product_name": product_name,
             "brand": brand,
@@ -363,22 +339,40 @@ def classify_product(
                 "eligible": False,
                 "reason": f"No insurance specification documents found for product category '{category}'",
                 "risk_profile": None,
+                "document_used": None,
                 "document_type": "STANDARD",
                 "coverage_modules": [],
-                "exclusions": [],
-                "assurmax_caps": None
+                "exclusions": []
             }
         }
     
-    #  STEP 3: ANALYZE ELIGIBILITY WITH LLM
-    print(f"\n Analyzing eligibility with LLM...")
-    classification = analyze_eligibility_with_llm(product_name, category, unique_docs)
-    print(f"   Result: {' ELIGIBLE' if classification['eligible'] else ' NOT ELIGIBLE'}")
-    if not classification['eligible']:
-        print(f"   Reason: {classification['reason']}")
+    # ==========================================
+    # STEP 3: ANALYZE ELIGIBILITY WITH LLM
+    # ==========================================
+    print(f"\n🤖 Analyzing eligibility...")
+    classification = analyze_eligibility_with_llm(
+        product_name, 
+        category, 
+        brand,
+        price_float,
+        currency,
+        unique_docs
+    )
+    
+    # Print result
+    if classification['eligible']:
+        print(f"   ✅ ELIGIBLE for insurance")
+        print(f"   Risk Profile: {classification.get('risk_profile', 'N/A')}")
+        print(f"   Document Used: {classification.get('document_used', 'N/A')}")
+    else:
+        print(f"   ❌ NOT ELIGIBLE")
+        print(f"   Reason: {classification.get('reason', 'Unknown')[:100]}")
+    
     print(f"{'='*70}\n")
     
-    #  STEP 4: RETURN STRUCTURED RESULT
+    # ==========================================
+    # STEP 4: RETURN STRUCTURED RESULT
+    # ==========================================
     return {
         "product_name": product_name,
         "brand": brand,
@@ -388,3 +382,51 @@ def classify_product(
         "market": market,
         "classification": classification
     }
+
+
+# ==========================================
+# TEST FUNCTION
+# ==========================================
+
+if __name__ == "__main__":
+    """Test the classification tool"""
+    
+    print("\n" + "="*80)
+    print("TESTING PRODUCT CLASSIFICATION TOOL")
+    print("="*80)
+    
+    test_products = [
+        {
+            "product_name": "iPhone 15 Pro",
+            "category": "Smartphone",
+            "brand": "Apple",
+            "price": 4500,
+            "currency": "AED"
+        },
+        {
+            "product_name": "MacBook Pro 16-inch",
+            "category": "Laptop",
+            "brand": "Apple",
+            "price": 12000,
+            "currency": "AED"
+        },
+        {
+            "product_name": "MAC Lipstick Set",
+            "category": "Beauty & Cosmetics",
+            "brand": "MAC",
+            "price": 150,
+            "currency": "AED"
+        }
+    ]
+    
+    for product in test_products:
+        result = classify_product.invoke(product)
+        
+        print(f"\n{'='*80}")
+        print(f"RESULT: {result['product_name']}")
+        print(f"{'='*80}")
+        print(f"Eligible: {result['classification']['eligible']}")
+        print(f"Risk Profile: {result['classification'].get('risk_profile', 'N/A')}")
+        if not result['classification']['eligible']:
+            print(f"Reason: {result['classification']['reason']}")
+        print()
