@@ -33,7 +33,7 @@ if not API_KEY:
 
 
 MAX_PAGES = 100
-MAX_WORKERS = 5  # Parallel scrapers
+MAX_WORKERS = 5  
 
 
 PRODUCT_SCHEMA = {
@@ -61,9 +61,7 @@ PRODUCT_SCHEMA = {
 }
 
 
-# ============================================================
-# AVAILABLE INSURANCE CATEGORIES
-# ============================================================
+
 
 AVAILABLE_CATEGORIES = {
     "ELECTRONIC_PRODUCTS": {
@@ -152,19 +150,19 @@ def match_product_to_selected_categories(product_name: str, category: str, selec
         True if product matches any selected category, False otherwise
     """
     if not selected_categories:
-        return True  # No filter, accept all
+        return True  
     
-    # Combine product name and category for matching
+    
     search_text = f"{product_name} {category}".lower()
     
-    # Check each selected category
+    
     for cat_key in selected_categories:
         if cat_key not in AVAILABLE_CATEGORIES:
             continue
         
         keywords = AVAILABLE_CATEGORIES[cat_key]["keywords"]
         
-        # If any keyword matches, this product belongs to this category
+        
         if any(keyword.lower() in search_text for keyword in keywords):
             return True
     
@@ -252,10 +250,6 @@ def format_time(seconds: float) -> str:
 
 
 
-# ============================================================
-# SCRAPE ONE URL AND PROCESS IMMEDIATELY (WITH CATEGORY FILTER)
-# ============================================================
-
 
 def scrape_and_process_url(
     url: str, 
@@ -266,7 +260,7 @@ def scrape_and_process_url(
     stats_lock: threading.Lock, 
     url_index: int, 
     total_urls: int,
-    selected_categories: List[str]  # ← NEW: Category filter
+    selected_categories: List[str] 
 ):
     """
     Scrape a single URL, extract products, FILTER by category, process immediately with AI
@@ -297,7 +291,7 @@ def scrape_and_process_url(
             with stats_lock:
                 stats["scraped"] += 1
             
-            # Quick validation
+            
             if not product_raw.get("product_name"):
                 with stats_lock:
                     stats["invalid"] += 1
@@ -306,7 +300,7 @@ def scrape_and_process_url(
             product_name = product_raw.get("product_name", "")
             product_category = product_raw.get("category", "")
             
-            # ⭐ NEW: Category filter - Skip if not in selected categories
+           
             if not match_product_to_selected_categories(product_name, product_category, selected_categories):
                 with stats_lock:
                     stats["filtered_out"] += 1
@@ -530,9 +524,7 @@ def scrape_and_process_url(
 
 
 
-# ============================================================
-# TRUE STREAMING PIPELINE (WITH CATEGORY SELECTION)
-# ============================================================
+
 
 
 def true_streaming_pipeline(start_url: str, selected_categories: Optional[List[str]] = None) -> Dict[str, Any]:
@@ -636,7 +628,7 @@ def true_streaming_pipeline(start_url: str, selected_categories: Optional[List[s
     print(f"Results will appear IMMEDIATELY as products are found and processed\n")
     print(f"{'='*70}\n")
     
-    # Shared state
+  
     seen_urls = set()
     stats = {
         "scraped": 0,
@@ -645,7 +637,7 @@ def true_streaming_pipeline(start_url: str, selected_categories: Optional[List[s
         "not_eligible": 0,
         "duplicates": 0,
         "invalid": 0,
-        "filtered_out": 0  # ← NEW: Products filtered by category
+        "filtered_out": 0  
     }
     stats_lock = threading.Lock()
     
@@ -658,7 +650,7 @@ def true_streaming_pipeline(start_url: str, selected_categories: Optional[List[s
             future = executor.submit(
                 scrape_and_process_url,
                 url, partner_id, start_domain, seen_urls, stats, stats_lock, idx, len(filtered_urls),
-                selected_categories or []  # ← Pass category filter
+                selected_categories or []  
             )
             futures.append(future)
         
@@ -700,11 +692,10 @@ def true_streaming_pipeline(start_url: str, selected_categories: Optional[List[s
 
 
 if __name__ == "__main__":
-    # Example: python streaming_pipeline.py "https://www.virginmegastore.ae/en" "ELECTRONIC_PRODUCTS,MICRO_MOBILITY_ESSENTIAL"
+   
     
     start_url = sys.argv[1] if len(sys.argv) > 1 else "https://www.virginmegastore.ae/en"
     
-    # Parse selected categories from command line
     selected_categories = None
     if len(sys.argv) > 2:
         categories_str = sys.argv[2]
