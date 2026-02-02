@@ -1,0 +1,813 @@
+{
+  "summary": {
+    "total": 88,
+    "passed": 77,
+    "failed": 11,
+    "errors": 0
+  },
+  "by_category": {
+    "Electronics": {
+      "passed": 22,
+      "failed": 2,
+      "errors": 0,
+      "tests": [
+        {
+          "product": "iPhone 15 Pro Max",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Samsung Galaxy S24 Ultra",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Google Pixel 8 Pro",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "OnePlus 12",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "MacBook Pro 16-inch M3",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Dell XPS 15",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "HP Pavilion",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Lenovo ThinkPad X1",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "iPad Pro 12.9",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Samsung Galaxy Tab S9",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Samsung QLED 65 inch",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "LG OLED C3 55 inch",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Sony Bravia 75 inch",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Apple Watch Series 9",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Samsung Galaxy Watch 6",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "AirPods Pro 2",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Sony WH-1000XM5",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Bose QuietComfort",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "PlayStation 5",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Xbox Series X",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Canon EOS R5",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "NOT ELIGIBLE",
+          "passed": false,
+          "error": null
+        },
+        {
+          "product": "Sony A7 IV",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "NOT ELIGIBLE",
+          "passed": false,
+          "error": null
+        },
+        {
+          "product": "Office Chair",
+          "type": "negative",
+          "expected": "NOT ELIGIBLE",
+          "actual": "NOT ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Running Shoes",
+          "type": "negative",
+          "expected": "NOT ELIGIBLE",
+          "actual": "NOT ELIGIBLE",
+          "passed": true,
+          "error": null
+        }
+      ]
+    },
+    "Home Appliances": {
+      "passed": 6,
+      "failed": 3,
+      "errors": 0,
+      "tests": [
+        {
+          "product": "Samsung Front Load Washer",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "LG TurboWash",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Samsung French Door Fridge",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "LG InstaView",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Bosch Series 6",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Samsung Microwave Oven",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "NOT ELIGIBLE",
+          "passed": false,
+          "error": null
+        },
+        {
+          "product": "Daikin Split AC",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Midea AC Unit",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "NOT ELIGIBLE",
+          "passed": false,
+          "error": null
+        },
+        {
+          "product": "iPhone 15",
+          "type": "negative",
+          "expected": "NOT ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": false,
+          "error": null
+        }
+      ]
+    },
+    "Micromobility": {
+      "passed": 6,
+      "failed": 1,
+      "errors": 0,
+      "tests": [
+        {
+          "product": "Trek Electric Bike",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Specialized Turbo",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Rad Power Bike",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Xiaomi M365",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Segway Ninebot",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Segway MiniPro",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Mountain Bike",
+          "type": "negative",
+          "expected": "NOT ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": false,
+          "error": null
+        }
+      ]
+    },
+    "Baby Equipment": {
+      "passed": 4,
+      "failed": 1,
+      "errors": 0,
+      "tests": [
+        {
+          "product": "Bugaboo Fox 5",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Maxi-Cosi AxissFix",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "SNOO Smart Sleeper",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "NOT ELIGIBLE",
+          "passed": false,
+          "error": null
+        },
+        {
+          "product": "Owlet Baby Monitor",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Baby Clothes",
+          "type": "negative",
+          "expected": "NOT ELIGIBLE",
+          "actual": "NOT ELIGIBLE",
+          "passed": true,
+          "error": null
+        }
+      ]
+    },
+    "Bags & Luggage": {
+      "passed": 4,
+      "failed": 0,
+      "errors": 0,
+      "tests": [
+        {
+          "product": "Samsonite Spinner",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Tumi Alpha Bravo",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Rimowa Original",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Plastic Shopping Bag",
+          "type": "negative",
+          "expected": "NOT ELIGIBLE",
+          "actual": "NOT ELIGIBLE",
+          "passed": true,
+          "error": null
+        }
+      ]
+    },
+    "Garden & DIY": {
+      "passed": 3,
+      "failed": 1,
+      "errors": 0,
+      "tests": [
+        {
+          "product": "Honda Lawn Mower",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Bosch Drill Set",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Weber Genesis II",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "NOT ELIGIBLE",
+          "passed": false,
+          "error": null
+        },
+        {
+          "product": "Garden Gloves",
+          "type": "negative",
+          "expected": "NOT ELIGIBLE",
+          "actual": "NOT ELIGIBLE",
+          "passed": true,
+          "error": null
+        }
+      ]
+    },
+    "Health & Wellness": {
+      "passed": 4,
+      "failed": 0,
+      "errors": 0,
+      "tests": [
+        {
+          "product": "Omron Blood Pressure Monitor",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Withings Body+",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Theragun Pro",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Vitamin C Pills",
+          "type": "negative",
+          "expected": "NOT ELIGIBLE",
+          "actual": "NOT ELIGIBLE",
+          "passed": true,
+          "error": null
+        }
+      ]
+    },
+    "Living & Furniture": {
+      "passed": 2,
+      "failed": 2,
+      "errors": 0,
+      "tests": [
+        {
+          "product": "Herman Miller Aeron",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "NOT ELIGIBLE",
+          "passed": false,
+          "error": null
+        },
+        {
+          "product": "IKEA KIVIK Sofa",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "West Elm Dining Table",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Table Lamp",
+          "type": "negative",
+          "expected": "NOT ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": false,
+          "error": null
+        }
+      ]
+    },
+    "Optical & Hearing": {
+      "passed": 4,
+      "failed": 0,
+      "errors": 0,
+      "tests": [
+        {
+          "product": "Ray-Ban Aviator",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Oakley Prescription Glasses",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Phonak Hearing Aid",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Contact Lens Solution",
+          "type": "negative",
+          "expected": "NOT ELIGIBLE",
+          "actual": "NOT ELIGIBLE",
+          "passed": true,
+          "error": null
+        }
+      ]
+    },
+    "Personal Care Devices": {
+      "passed": 5,
+      "failed": 0,
+      "errors": 0,
+      "tests": [
+        {
+          "product": "Dyson Supersonic",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Philips OneBlade",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Oral-B iO",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "GHD Platinum+",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Shampoo",
+          "type": "negative",
+          "expected": "NOT ELIGIBLE",
+          "actual": "NOT ELIGIBLE",
+          "passed": true,
+          "error": null
+        }
+      ]
+    },
+    "Premium & Luxury": {
+      "passed": 5,
+      "failed": 0,
+      "errors": 0,
+      "tests": [
+        {
+          "product": "Rolex Submariner",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Louis Vuitton Speedy",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Herm\u00e8s Birkin",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Cartier Love Bracelet",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Regular Watch",
+          "type": "negative",
+          "expected": "NOT ELIGIBLE",
+          "actual": "NOT ELIGIBLE",
+          "passed": true,
+          "error": null
+        }
+      ]
+    },
+    "Sound & Music": {
+      "passed": 4,
+      "failed": 0,
+      "errors": 0,
+      "tests": [
+        {
+          "product": "Fender Stratocaster",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Yamaha P-125",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Marshall JCM800",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Guitar Strings",
+          "type": "negative",
+          "expected": "NOT ELIGIBLE",
+          "actual": "NOT ELIGIBLE",
+          "passed": true,
+          "error": null
+        }
+      ]
+    },
+    "Sport & Outdoor": {
+      "passed": 5,
+      "failed": 0,
+      "errors": 0,
+      "tests": [
+        {
+          "product": "Peloton Bike+",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "NordicTrack Treadmill",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "North Face Tent",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Callaway Golf Clubs",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Yoga Mat",
+          "type": "negative",
+          "expected": "NOT ELIGIBLE",
+          "actual": "NOT ELIGIBLE",
+          "passed": true,
+          "error": null
+        }
+      ]
+    },
+    "Textile & Footwear": {
+      "passed": 3,
+      "failed": 1,
+      "errors": 0,
+      "tests": [
+        {
+          "product": "Canada Goose Parka",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Nike Air Jordan",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Christian Louboutin Heels",
+          "type": "positive",
+          "expected": "ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": true,
+          "error": null
+        },
+        {
+          "product": "Basic T-Shirt",
+          "type": "negative",
+          "expected": "NOT ELIGIBLE",
+          "actual": "ELIGIBLE",
+          "passed": false,
+          "error": null
+        }
+      ]
+    }
+  },
+  "consistency_failures": []
+}

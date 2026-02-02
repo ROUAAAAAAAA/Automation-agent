@@ -26,6 +26,49 @@ vectorstore = PineconeVectorStore(
     pinecone_api_key=os.getenv("PINECONE_API_KEY")
 )
 
+def retrieve_specs_raw(query: str, k: int = 3, market: str = None) -> List[Document]:
+    """
+    Retrieve raw document objects with MARKET FILTERING.
+    
+    Args:
+        query: Search query
+        k: Number of documents to retrieve (will retrieve k*2 then filter)
+        market: "UAE" or "Tunisia" - filters documents by market
+    
+    Returns:
+        List of Document objects (market-filtered)
+    """
+    try:
+        # Retrieve more docs to account for filtering
+        docs = vectorstore.similarity_search(query, k=k*3)
+        
+        if not market:
+            return docs[:k]
+        
+        # CRITICAL: Filter by market
+        market_docs = []
+        for doc in docs:
+            filename = doc.metadata.get('file_name', '').lower()
+            
+            if market == "UAE":
+                # UAE specs: contain "uae" or "essential" but NOT "tunisia" or "_tn"
+                is_uae = ("uae" in filename or "essential" in filename) and \
+                         "tunisia" not in filename and "_tn." not in filename
+                if is_uae:
+                    market_docs.append(doc)
+                    
+            elif market == "Tunisia":
+                # Tunisia specs: contain "tunisia" or "_tn"
+                is_tunisia = "tunisia" in filename or "_tn." in filename
+                if is_tunisia:
+                    market_docs.append(doc)
+        
+        # Return top k market-specific docs
+        return market_docs[:k] if market_docs else docs[:k]
+        
+    except Exception as e:
+        print(f"❌ Error retrieving raw specs: {e}")
+        return []
 
 def retrieve_product_specs(query: str, k: int = 5) -> str:
     """
@@ -121,28 +164,8 @@ CONTENT:
         print(f"❌ {error_msg}")
         return error_msg
 
-
-def retrieve_specs_raw(query: str, k: int = 3) -> List[Document]:
-    """
-    Retrieve raw document objects without formatting.
-    
-    Args:
-        query: Search query
-        k: Number of documents to retrieve
-    
-    Returns:
-        List of Document objects
-    """
-    try:
-        return vectorstore.similarity_search(query, k=k)
-    except Exception as e:
-        print(f"❌ Error retrieving raw specs: {e}")
-        return []
-
-
 # Alias for backward compatibility
 retrieve_specs = retrieve_product_specs
-
 
 if __name__ == "__main__":
     print("="*80)
@@ -154,25 +177,21 @@ if __name__ == "__main__":
     
     # Test queries
     test_queries = [
-        "iPhone smartphone electronics UAE",
-        "laptop computer gaming",
-        "washing machine appliance"
+        ("iPhone smartphone electronics", "UAE"),
+        ("laptop computer gaming", "Tunisia"),
+        ("washing machine appliance", "UAE")
     ]
     
-    for query in test_queries:
+    for query, market in test_queries:
         print(f"\n{'='*80}")
-        print(f"TEST QUERY: {query}")
+        print(f"TEST QUERY: {query} (Market: {market})")
         print(f"{'='*80}")
         
         try:
-            specs = retrieve_product_specs(query, k=3)
-            
-            # Show first 1500 characters
-            if len(specs) > 1500:
-                print(specs[:1500])
-                print("\n... [truncated] ...")
-            else:
-                print(specs)
+            docs = retrieve_specs_raw(query, k=3, market=market)
+            print(f"Retrieved {len(docs)} {market}-specific documents:")
+            for doc in docs:
+                print(f"  - {doc.metadata.get('file_name', 'Unknown')}")
                 
         except Exception as e:
             print(f"❌ Error: {e}")

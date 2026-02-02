@@ -1,8 +1,4 @@
-"""
-Streamlit App for Garanty Affinity Insurance
-Reads processed products directly from DATABASE (not JSON files)
-UPDATED: NEW ASSURMAX Logic (5000 AED cap, 550 AED premium)
-"""
+
 
 import streamlit as st
 import sys
@@ -15,7 +11,6 @@ st.set_page_config(
     layout="wide"
 )
 
-
 # ============================================================
 # UI HELPER FUNCTIONS
 # ============================================================
@@ -24,81 +19,68 @@ def render_coverage_modules(modules: list):
     """Display coverage modules"""
     if not modules:
         return
-    st.markdown("### ✅ What's Covered")
+    st.markdown("###  What's Covered")
     for m in modules:
-        st.markdown(f"- ✅ {m}")
+        st.markdown(f"-  {m}")
 
 
 def render_exclusions(exclusions: list):
     """Display exclusions"""
     if not exclusions:
         return
-    with st.expander("❌ What's NOT Covered"):
+    with st.expander(" What's NOT Covered"):
         for e in exclusions:
-            st.markdown(f"- ❌ {e}")
+            st.markdown(f"-  {e}")
 
 
 def render_pricing_cards(insurance_data: dict):
     """
     Render pricing cards for UAE products (3 options) or Tunisia (2 options)
-    
-    NEW LOGIC:
-    - UAE: Standard 12m, Standard 24m, ASSURMAX
-    - Tunisia: Standard 12m, Standard 24m only
     """
     market = insurance_data.get("market", "UAE")
     
-    # Standard premiums (always present)
     std_12 = insurance_data.get("standard_premium_12_months", {})
     std_24 = insurance_data.get("standard_premium_24_months", {})
-    
-    # ASSURMAX premium (UAE only)
     assurmax = insurance_data.get("assurmax_premium", {})
     
-    st.markdown("### 💰 Insurance Pricing Options")
+    st.markdown("###  Insurance Pricing Options")
     
     if market == "UAE" and assurmax and assurmax.get("amount"):
         # UAE: Show 3 options
         cols = st.columns(3)
         
-        # Card 1: Standard 12-month
         with cols[0]:
-            st.markdown("#### 📅 Standard (12 Months)")
+            st.markdown("####  Standard (12 Months)")
             st.markdown(f"### {std_12.get('amount', 'N/A')} {std_12.get('currency', 'AED')}")
             st.caption("Annual coverage with standard benefits")
         
-        # Card 2: Standard 24-month
         with cols[1]:
-            st.markdown("#### 📅 Standard (24 Months)")
+            st.markdown("####  Standard (24 Months)")
             st.markdown(f"### {std_24.get('amount', 'N/A')} {std_24.get('currency', 'AED')}")
             st.caption("2-year coverage with standard benefits")
         
-        # Card 3: ASSURMAX
         with cols[2]:
-            st.markdown("#### ⚡ ASSURMAX")
+            st.markdown("####  ASSURMAX")
             
             if assurmax.get("eligible") == False:
-                # Product exceeds ASSURMAX cap
                 st.warning("Not Eligible")
                 st.caption(assurmax.get("reason", "Product exceeds ASSURMAX cap"))
             else:
                 st.markdown(f"### {assurmax.get('amount', 'N/A')} {assurmax.get('currency', 'AED')}")
-                st.markdown(f"📦 **Pack Cap:** {assurmax.get('pack_cap', 'N/A')} {assurmax.get('currency', 'AED')}")
-                st.markdown(f"🎯 **Max Products:** {assurmax.get('max_products', 'N/A')}")
+                st.markdown(f" **Pack Cap:** {assurmax.get('pack_cap', 'N/A')} {assurmax.get('currency', 'AED')}")
+                st.markdown(f" **Max Products:** {assurmax.get('max_products', 'N/A')}")
     
     else:
         # Tunisia or UAE without ASSURMAX: Show 2 options
         cols = st.columns(2)
         
-        # Card 1: Standard 12-month
         with cols[0]:
-            st.markdown("#### 📅 Standard (12 Months)")
+            st.markdown("####  Standard (12 Months)")
             st.markdown(f"### {std_12.get('amount', 'N/A')} {std_12.get('currency', 'TND' if market == 'Tunisia' else 'AED')}")
             st.caption("Annual coverage with standard benefits")
         
-        # Card 2: Standard 24-month
         with cols[1]:
-            st.markdown("#### 📅 Standard (24 Months)")
+            st.markdown("####  Standard (24 Months)")
             st.markdown(f"### {std_24.get('amount', 'N/A')} {std_24.get('currency', 'TND' if market == 'Tunisia' else 'AED')}")
             st.caption("2-year coverage with standard benefits")
 
@@ -107,7 +89,7 @@ def render_pricing_cards(insurance_data: dict):
 # MAIN APP UI
 # ============================================================
 
-st.title("🛡️ Garanty Affinity Insurance")
+st.title(" Garanty Affinity Insurance")
 
 
 website_url = st.text_input(
@@ -125,14 +107,14 @@ max_products = st.slider(
     help="Limit processing for faster results"
 )
 
-if st.button("🚀 Generate Insurance Quotes", type="primary"):
+if st.button(" Generate Insurance Quotes", type="primary"):
 
     if not website_url:
-        st.warning("⚠️ Please enter a URL")
+        st.warning(" Please enter a URL")
         st.stop()
 
     if not website_url.startswith(("http://", "https://")):
-        st.error("❌ URL must start with http:// or https://")
+        st.error(" URL must start with http:// or https://")
         st.stop()
 
     try:
@@ -147,66 +129,64 @@ if st.button("🚀 Generate Insurance Quotes", type="primary"):
             sys.path.insert(0, str(current_dir.parent))
         
         try:
-            from scrapper.Scrapper import crawl_entire_site, save_products
+            from scrapper.Scrapper import crawl_entire_site  # ✅ Updated import (no save_products)
         except ImportError as e:
-            st.error(f"❌ Cannot import scrapper module: {e}")
+            st.error(f"Cannot import scrapper module: {e}")
             st.stop()
         
         try:
-            from main_workflow_optimised import run_workflow_from_json
+            from main_workflow_optimised import run_workflow  # ✅ Updated import
         except ImportError as e:
-            st.error(f"❌ Cannot import workflow module: {e}")
+            st.error(f" Cannot import workflow module: {e}")
             st.stop()
         
         try:
             from database.models import SessionLocal, Product, InsurancePackage
-            from database.crud import get_partner_by_name, get_processing_stats
+            from database.crud import get_processing_stats
         except ImportError as e:
-            st.error(f"❌ Cannot import database modules: {e}")
+            st.error(f" Cannot import database modules: {e}")
             st.stop()
         
         # ==========================================
-        # STEP 2: Scrape Website
+        # STEP 2: Scrape Website (DIRECT TO DATABASE)
         # ==========================================
-        with st.spinner("🔍 Scraping website..."):
-            products = crawl_entire_site(website_url)
+        with st.spinner(" Scraping website ..."):
+            scrape_result = crawl_entire_site(website_url)
 
-        if not products:
-            st.error("❌ No valid product pages detected.")
+        if not scrape_result.get("success"):
+            st.error(f" Scraping failed: {scrape_result.get('error')}")
             st.stop()
 
-        st.success(f"✅ Found {len(products)} products")
+        stats = scrape_result.get("stats", {})
+        partner_id = scrape_result.get("partner_id")
+        partner_name = scrape_result.get("partner_name")
+        
+        st.success(f" Scraped {stats.get('added', 0)} new products!")
+        
+        if stats.get('duplicates', 0) > 0:
+            st.info(f"Skipped {stats.get('duplicates')} duplicate products")
 
         # ==========================================
-        # STEP 3: Save Products to JSON
+        # STEP 3: Process with AI Workflow (DIRECT FROM DATABASE)
         # ==========================================
-        filename = save_products(products, website_url)
-        if not filename:
-            st.error("❌ Failed to save products.")
-            st.stop()
-
-        # ==========================================
-        # STEP 4: Process with AI Workflow
-        # ==========================================
-        with st.spinner(f"🤖 Processing {max_products} products with AI..."):
-            result = run_workflow_from_json(filename, max_products=max_products)
+        with st.spinner(f" Processing {max_products} products with AI..."):
+            result = run_workflow(
+                max_products=max_products,
+                domain_hint=partner_name  # 
+            )
 
         if not result or not result.get("success"):
-            st.error("❌ Insurance generation failed.")
+            st.error(" Insurance generation failed.")
             st.stop()
 
         # ==========================================
-        # STEP 5: Read Results from DATABASE
+        # STEP 4: Read Results from DATABASE
         # ==========================================
-        st.success("✅ Processing complete! Loading results from database...")
+        st.success(" Processing complete! Loading results from database...")
         
         db = SessionLocal()
         
         try:
-            # Get partner info
-            partner_id = result["partner_id"]
-            partner_name = result["partner_name"]
-            
             # Query processed products from database
             processed_products = db.query(
                 Product.product_name,
@@ -216,7 +196,7 @@ if st.button("🚀 Generate Insurance Quotes", type="primary"):
                 Product.category,
                 Product.description,
                 InsurancePackage.package_data,
-                InsurancePackage.status  # ✅ Correct column name
+                InsurancePackage.status
             ).join(
                 InsurancePackage,
                 Product.product_id == InsurancePackage.product_id
@@ -244,25 +224,13 @@ if st.button("🚀 Generate Insurance Quotes", type="primary"):
                     "description": row.description
                 }
                 
-                # ✅ Check eligibility from package_data (where it's actually stored)
-                is_eligible = False
-                
-                # Method 1: Check classification.eligible (most common)
-                if pkg_data.get("classification", {}).get("eligible") is True:
-                    is_eligible = True
-                
-                # Method 2: Check root level eligible
-                elif pkg_data.get("eligible") is True:
-                    is_eligible = True
-                
-                # Method 3: Check if premium data exists (means eligible)
-                elif (pkg_data.get("standard_premium_12_months") and 
-                      pkg_data.get("standard_premium_12_months", {}).get("amount")):
-                    is_eligible = True
-                
-                # Method 4: Check status column (as fallback)
-                elif row.status == "eligible":
-                    is_eligible = True
+                # Check eligibility
+                is_eligible = (
+                    pkg_data.get("eligible") is True or
+                    row.status == "eligible" or
+                    (pkg_data.get("standard_premium_12_months") and 
+                     pkg_data.get("standard_premium_12_months", {}).get("amount"))
+                )
                 
                 if is_eligible:
                     eligible.append(pkg_data)
@@ -270,31 +238,31 @@ if st.button("🚀 Generate Insurance Quotes", type="primary"):
                     not_eligible.append(pkg_data)
             
             # ==========================================
-            # STEP 6: Display Metrics
+            # STEP 5: Display Metrics
             # ==========================================
             st.markdown("---")
-            st.subheader(f"📊 Results for {partner_name}")
+            st.subheader(f" Results for {partner_name}")
             
             c1, c2, c3, c4 = st.columns(4)
             c1.metric("Products Processed", len(processed_products))
-            c2.metric("✅ Eligible", len(eligible))
-            c3.metric("❌ Not Eligible", len(not_eligible))
-            c4.metric("⏱️ Time", f"{result.get('processing_time', 'N/A')}s")
+            c2.metric(" Eligible", len(eligible))
+            c3.metric(" Not Eligible", len(not_eligible))
+            c4.metric("⏱Time", f"{result.get('processing_time', 'N/A')}s")
 
             st.markdown("---")
 
             # ==========================================
-            # STEP 7: Display Eligible Products
+            # STEP 6: Display Eligible Products
             # ==========================================
             if eligible:
-                st.subheader("✅ Products with Insurance Coverage")
+                st.subheader(" Products with Insurance Coverage")
 
                 for idx, insurance in enumerate(eligible, 1):
                     product = insurance.get("product", {})
                     product_name = product.get("name", "Unknown")
                     
                     with st.expander(f"#{idx} - {product_name[:70]}"):
-                        st.markdown("### 📦 Product Information")
+                        st.markdown("###  Product Information")
 
                         c1, c2 = st.columns(2)
                         with c1:
@@ -310,12 +278,12 @@ if st.button("🚀 Generate Insurance Quotes", type="primary"):
                         description = product.get('description')
                         if description and description not in ['N/A', '', None]:
                             st.markdown("---")
-                            st.markdown("#### 📝 Product Description")
+                            st.markdown("####  Product Description")
                             st.write(description)
 
                         st.markdown("---")
 
-                        # Pricing Cards (NEW)
+                        # Pricing Cards
                         render_pricing_cards(insurance)
                         
                         st.markdown("---")
@@ -325,14 +293,14 @@ if st.button("🚀 Generate Insurance Quotes", type="primary"):
                         render_exclusions(insurance.get("exclusions", []))
 
             else:
-                st.info("ℹ️ No products were eligible for insurance.")
+                st.info(" No products were eligible for insurance.")
 
             # ==========================================
-            # STEP 8: Display Not Eligible Products
+            # STEP 7: Display Not Eligible Products
             # ==========================================
             if not_eligible:
                 st.markdown("---")
-                st.subheader("❌ Products Not Eligible for Insurance")
+                st.subheader("Products Not Eligible for Insurance")
 
                 for idx, insurance in enumerate(not_eligible, 1):
                     product = insurance.get("product", {})
@@ -347,16 +315,11 @@ if st.button("🚀 Generate Insurance Quotes", type="primary"):
                         description = product.get('description')
                         if description and description not in ['N/A', '', None]:
                             st.markdown("---")
-                            st.markdown("#### 📝 Product Description")
+                            st.markdown("####  Product Description")
                             st.write(description)
                             st.markdown("---")
                         
-                        # Get reason from classification or root level
-                        reason = (
-                            insurance.get("classification", {}).get("reason") or
-                            insurance.get("reason") or
-                            "Not eligible for insurance"
-                        )
+                        reason = insurance.get("reason", "Not eligible for insurance")
                         st.error(f"**Reason:** {reason}")
                         
                         if insurance.get('risk_profile'):
@@ -365,10 +328,10 @@ if st.button("🚀 Generate Insurance Quotes", type="primary"):
                             st.info(f"**Market:** {insurance['market']}")
             
             # ==========================================
-            # STEP 9: Download Results
+            # STEP 8: Download Results
             # ==========================================
             st.markdown("---")
-            st.subheader("📥 Download Results")
+            st.subheader(" Download Results")
             
             import json
             
@@ -386,7 +349,7 @@ if st.button("🚀 Generate Insurance Quotes", type="primary"):
             }
             
             st.download_button(
-                label="📄 Download JSON Report",
+                label=" Download JSON Report",
                 data=json.dumps(download_data, indent=2, ensure_ascii=False),
                 file_name=f"{partner_name}_insurance_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
                 mime="application/json"
@@ -397,7 +360,7 @@ if st.button("🚀 Generate Insurance Quotes", type="primary"):
 
     except Exception as e:
         import traceback
-        st.error(f"❌ Unexpected error occurred: {str(e)}")
-        with st.expander("🔍 Show Error Details"):
+        st.error(f" Unexpected error occurred: {str(e)}")
+        with st.expander(" Show Error Details"):
             st.code(traceback.format_exc())
 

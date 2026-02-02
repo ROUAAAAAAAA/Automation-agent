@@ -1,107 +1,68 @@
 from langchain_core.tools import tool
 from typing import Union
 
+# ============================================================
+# NEW RATE MATRIX FROM CSV FILE
+# ============================================================
+
+# Based on products_pricing1-Products-Pricing.csv
+RATE_MATRIX_CSV = {
+    # Category: (12_month_rate, 24_month_duration_factor)
+    
+    # UAE Categories
+    "ELECTRONIC_PRODUCTS": (0.095, 1.35),  # Electronics: 9.5%, factor 1.35
+    "MOBILE_PERSONAL": (0.095, 1.35),       # Part of Electronics
+    "COMPUTING_GAMING": (0.095, 1.35),      # Part of Electronics
+    "HOME_AV": (0.095, 1.35),               # Part of Electronics
+    
+    "APPLE_PRODUCTS": (0.15, 1.4),          # Apple: 15%, factor 1.4 (special)
+    
+    "HOME_APPLIANCES": (0.095, 1.35),       # Home Appliances: 9.5%, factor 1.35
+    
+    "BABY_EQUIPMENT_ESSENTIAL": (0.115, 1.35),   # Baby: 11.5%, factor 1.35
+    
+    "BAGS_LUGGAGE_ESSENTIAL": (0.125, 1.4),      # Bags: 12.5%, factor 1.4
+    
+    "GARDEN_DIY_ESSENTIAL": (0.11, 1.4),         # Garden: 11%, factor 1.4
+    
+    "HEALTH_WELLNESS_ESSENTIAL": (0.115, 1.35),  # Health: 11.5%, factor 1.35
+    
+    "LIVING_FURNITURE_ESSENTIAL": (0.10, 1.35),  # Furniture: 10%, factor 1.35
+    
+    "MICRO_MOBILITY_ESSENTIAL": (0.12, 1.4),     # Bikes: 12%, factor 1.4
+    
+    "OPTICAL_HEARING_ESSENTIAL": (0.08, 1.4),    # Optical: 8%, factor 1.4
+    
+    "PERSONAL_CARE_DEVICES": (0.11, 1.4),        # Personal Care: 11%, factor 1.4
+    
+    "OPULENCIA_PREMIUM": (0.11, 1.4),            # Luxury: 11%, factor 1.4
+    
+    "SOUND_MUSIC_ESSENTIAL": (0.08, 1.4),        # Music: 8%, factor 1.4
+    
+    "SPORT_OUTDOOR_ESSENTIAL": (0.08, 1.4),      # Sport: 8%, factor 1.4
+    
+    "TEXTILE_FOOTWEAR_ZARA": (0.07, 1.35),       # Textiles: 7%, factor 1.35
+    
+    # Tunisia Categories (same rates, add _TN suffix)
+    "ELECTRONIC_PRODUCTS_TN": (0.095, 1.35),
+    "BABY_EQUIPMENT_TN": (0.115, 1.35),
+    "HOME_APPLIANCES_TN": (0.095, 1.35),
+    "GARDEN_DIY_TN": (0.11, 1.4),
+    "HEALTH_WELLNESS_TN": (0.115, 1.35),
+    "FURNITURE_TN": (0.10, 1.35),
+    "SPORT_OUTDOOR_TN": (0.08, 1.4),
+}
 
 
-
+# ASSURMAX remains unchanged
 ASSURMAX_CONFIG = {
     "UAE": {
         "pack_cap": 5000,
         "currency": "AED",
-        "premium_rate": 0.11,  # 11%
+        "premium": 550.0,  # Flat premium
         "max_products": 3
     }
 }
-
-
-
-
-RATE_MATRIX = {
-    # UAE 
-    "ELECTRONIC_PRODUCTS": {"L": 0.08, "M": 0.095, "H": 0.11},
-    "MOBILE_PERSONAL": {"L": 0.08, "M": 0.095, "H": 0.11},
-    "COMPUTING_GAMING": {"L": 0.07, "M": 0.085, "H": 0.10},
-    "HOME_AV": {"L": 0.06, "M": 0.075, "H": 0.09},
-    
-    "GARDEN_DIY_ESSENTIAL": {"L": 0.07, "M": 0.085, "H": 0.10},
-    "SPORT_OUTDOOR_ESSENTIAL": {"L": 0.08, "M": 0.095, "H": 0.11},
-    "BABY_EQUIPMENT_ESSENTIAL": {"L": 0.07, "M": 0.085, "H": 0.10},
-    "HOME_APPLIANCES": {"L": 0.05, "M": 0.06, "H": 0.07},
-    "HEALTH_WELLNESS_ESSENTIAL": {"L": 0.07, "M": 0.085, "H": 0.10},
-    "MICRO_MOBILITY_ESSENTIAL": {"L": 0.09, "M": 0.11, "H": 0.13},
-    "BAGS_LUGGAGE_ESSENTIAL": {"L": 0.06, "M": 0.075, "H": 0.09},
-    "LIVING_FURNITURE_ESSENTIAL": {"L": 0.06, "M": 0.075, "H": 0.09},
-    "OPTICAL_HEARING_ESSENTIAL": {"L": 0.07, "M": 0.085, "H": 0.10},
-    "PERSONAL_CARE_DEVICES": {"L": 0.07, "M": 0.085, "H": 0.10},
-    "SOUND_MUSIC_ESSENTIAL": {"L": 0.08, "M": 0.095, "H": 0.11},
-    "OPULENCIA_PREMIUM": {"L": 0.10, "M": 0.12, "H": 0.15},
-    "TEXTILE_FOOTWEAR_ZARA": {"L": 0.05, "M": 0.06, "H": 0.07},
-    "SPECIALTY": {"L": 0.09, "M": 0.11, "H": 0.13},
-    
-    # Tunisia
-    "ELECTRONIC_PRODUCTS_TN": {"L": 0.08, "M": 0.095, "H": 0.11},
-    "GARDEN_DIY_TN": {"L": 0.07, "M": 0.085, "H": 0.10},
-    "SPORT_OUTDOOR_TN": {"L": 0.08, "M": 0.095, "H": 0.11},
-    "BABY_EQUIPMENT_TN": {"L": 0.07, "M": 0.085, "H": 0.10},
-    "HOME_APPLIANCES_TN": {"L": 0.05, "M": 0.06, "H": 0.07},
-    "HEALTH_WELLNESS_TN": {"L": 0.07, "M": 0.085, "H": 0.10},
-    "FURNITURE_TN": {"L": 0.06, "M": 0.075, "H": 0.09},
-}
-
-# DURATION FACTOR 
-DURATION_FACTOR = {
-    12: 1.00,
-    24: 1.35
-}
-
-# VALUE BUCKETS
-BUCKETS_BY_PROFILE_TN = {
-    "ELECTRONIC_PRODUCTS_TN": [(1500, "L"), (4000, "M"), (8000, "H")],
-    "BABY_EQUIPMENT_TN": [(400, "L"), (1200, "M"), (3000, "H")],
-    "FURNITURE_TN": [(800, "L"), (2000, "M"), (5000, "H")],
-    "GARDEN_DIY_TN": [(500, "L"), (1500, "M"), (3500, "H")],
-    "HEALTH_WELLNESS_TN": [(300, "L"), (900, "M"), (2000, "H")],
-    "HOME_APPLIANCES_TN": [(2000, "L"), (4500, "M"), (7500, "H")],
-    "SPORT_OUTDOOR_TN": [(400, "L"), (1200, "M"), (3000, "H")],
-}
-
-BUCKETS_UAE_DEFAULT = [(2000, "L"), (6000, "M"), (float('inf'), "H")]
-
-BUCKETS_BY_PROFILE_UAE = {
-    "HOME_APPLIANCES": [(2000, "L"), (6000, "M"), (11000, "H")],
-    "OPULENCIA_PREMIUM": [(3000, "M"), (10000, "M"), (50000, "H"), (300000, "XH")],
-}
-
-
-def get_bucket(price: float, market: str = "UAE", risk_profile: str = "") -> str:
-    """Determine the price bucket (L/M/H) based on market and risk profile."""
-    market_lower = market.lower()
-    
-    if "tunisia" in market_lower or "tn" in market_lower:
-        profile_buckets = BUCKETS_BY_PROFILE_TN.get(risk_profile, [])
-        
-        if profile_buckets:
-            for limit, label in profile_buckets:
-                if price <= limit:
-                    return label
-            return profile_buckets[-1][1]
-        
-        if price <= 400:
-            return "L"
-        elif price <= 1200:
-            return "M"
-        else:
-            return "H"
-    
-    else:
-        profile_buckets = BUCKETS_BY_PROFILE_UAE.get(risk_profile, BUCKETS_UAE_DEFAULT)
-        
-        for limit, label in profile_buckets:
-            if price <= limit:
-                return label
-        
-        return "H"
-
 
 
 @tool
@@ -109,24 +70,26 @@ def calculate_pricing(
     risk_profile: str = "",
     product_value: Union[float, int, str] = 0,
     market: str = "UAE",
-    duration_months: int = 12,
     plan: str = "STANDARD"
 ) -> dict:
     """
-    Calculate insurance pricing with NEW SIMPLIFIED ASSURMAX LOGIC.
+    Calculate insurance pricing using SIMPLIFIED FLAT RATES from CSV.
     
-    UAE: Returns STANDARD premiums (12m & 24m) + ASSURMAX premium if eligible
-    Tunisia: Returns STANDARD premiums (12m & 24m) only
+    NO BUCKETS (L/M/H) - Just apply flat percentage rate to product value.
+    
+    UAE: Returns STANDARD premiums (12m & 24m) + MONTHLY + ASSURMAX premium if eligible
+    Tunisia: Returns STANDARD premiums (12m & 24m) + MONTHLY only
+    
+    Monthly Premium = (Yearly Premium × 1.05) / 12
     
     Args:
         risk_profile: Product risk category (required for STANDARD plans)
         product_value: Product price in AED or TND
         market: Market region (UAE or Tunisia)
-        duration_months: Coverage duration (12 or 24 months)
         plan: "ASSURMAX" or "STANDARD"
     
     Returns:
-        Dictionary with pricing details
+        Dictionary with pricing details including monthly premium
     """
     
     # Convert product value
@@ -141,7 +104,9 @@ def calculate_pricing(
     plan_upper = plan.upper()
     market_upper = market.upper()
     
-  
+    # ==========================================
+    # ASSURMAX PRICING (UAE ONLY)
+    # ==========================================
     if plan_upper == "ASSURMAX":
         if market_upper != "UAE":
             return {
@@ -152,7 +117,7 @@ def calculate_pricing(
         config = ASSURMAX_CONFIG["UAE"]
         pack_cap = config["pack_cap"]
         currency = config["currency"]
-        premium_rate = config["premium_rate"]
+        flat_premium = config["premium"]
         max_products = config["max_products"]
         
         # Check if product exceeds pack cap
@@ -166,20 +131,26 @@ def calculate_pricing(
                 "reason": f"Product price must be ≤ {pack_cap} {currency} for ASSURMAX"
             }
         
-        # Calculate flat premium (11% of pack cap = 550 AED)
-        annual_premium = pack_cap * premium_rate
+        # Calculate monthly premium: (yearly × 1.05) / 12
+        monthly_premium = round((flat_premium * 1.05) / 12, 2)
         
+        # Flat premium: 550 AED regardless of product value
         return {
             "plan": "ASSURMAX",
             "market": market_upper,
             
+            "monthly": {
+                "monthly_premium": monthly_premium,
+                "currency": currency
+            },
+            
             "12_months": {
-                "annual_premium": round(annual_premium, 2),
+                "annual_premium": flat_premium,
                 "currency": currency
             },
             
             "24_months": {
-                "total_premium": round(annual_premium * 2, 2),
+                "total_premium": flat_premium * 2,  # 1100 AED for 2 years
                 "currency": currency
             },
             
@@ -190,39 +161,44 @@ def calculate_pricing(
             },
             
             "product_value": product_value_float,
-            "premium_rate_percent": round(premium_rate * 100, 1)
+            "flat_premium": True
         }
     
     # ==========================================
-    # STANDARD PRICING (UAE & TUNISIA)
+    # STANDARD PRICING (FLAT RATE - NO BUCKETS)
     # ==========================================
     elif plan_upper == "STANDARD":
         if not risk_profile:
             return {"error": "risk_profile is required for STANDARD pricing"}
         
-        # Determine bucket
-        bucket = get_bucket(product_value_float, market, risk_profile)
-        
-        # Get base rate
-        rate = RATE_MATRIX.get(risk_profile, {}).get(bucket)
-        
-        if not rate:
+        # Get rate from CSV mapping
+        if risk_profile not in RATE_MATRIX_CSV:
             return {
-                "error": f"No rate found for risk_profile '{risk_profile}' in bucket '{bucket}'",
-                "risk_profile": risk_profile,
-                "bucket": bucket
+                "error": f"Risk profile '{risk_profile}' not found in rate matrix",
+                "valid_profiles": list(RATE_MATRIX_CSV.keys()),
+                "risk_profile": risk_profile
             }
+        
+        rate_12m, duration_factor_24m = RATE_MATRIX_CSV[risk_profile]
         
         # Determine currency
         currency = "TND" if "tunisia" in market.lower() or "tn" in market.lower() else "AED"
         
-        # Calculate premiums
-        premium_12_months = round(product_value_float * rate, 2)
-        premium_24_months = round(premium_12_months * DURATION_FACTOR[24], 2)
+        # Calculate premiums (NO BUCKETS - simple multiplication)
+        premium_12_months = round(product_value_float * rate_12m, 2)
+        premium_24_months = round(premium_12_months * duration_factor_24m, 2)
+        
+        # Calculate monthly premium: (yearly × 1.05) / 12
+        monthly_premium = round((premium_12_months * 1.05) / 12, 2)
         
         return {
             "plan": "STANDARD",
             "market": market_upper,
+            
+            "monthly": {
+                "monthly_premium": monthly_premium,
+                "currency": currency
+            },
             
             "12_months": {
                 "annual_premium": premium_12_months,
@@ -236,13 +212,13 @@ def calculate_pricing(
             
             "product_value": product_value_float,
             "risk_profile": risk_profile,
-            "bucket": bucket,
-            "base_rate_percent": round(rate * 100, 1)
+            "rate_12m_percent": round(rate_12m * 100, 2),
+            "duration_factor_24m": duration_factor_24m
         }
     
     else:
         return {
-            "error": f"Invalid plan: {plan}. Valid options: ASSURMAX (UAE only), STANDARD",
+            "error": f"Invalid plan: {plan}. Valid options: ASSURMAX , STANDARD",
             "valid_plans": {
                 "UAE": ["ASSURMAX", "STANDARD"],
                 "Tunisia": ["STANDARD"]
