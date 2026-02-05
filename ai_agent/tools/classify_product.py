@@ -7,346 +7,438 @@ import json
 import dotenv
 
 import sys
-import os
 from pathlib import Path
 
-
-project_root = Path(__file__).parent.parent.parent 
+project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 dotenv.load_dotenv()
 
-def infer_category_with_llm(product_name: str, description: str, brand: str) -> str:
-    """Use LLM to infer product category if missing."""
-    llm = ChatOpenAI(
+def _get_llm():
+    return ChatOpenAI(
         model="gpt-4o-mini",
         temperature=0,
-        openai_api_key=os.getenv("OPENAI_API_KEY")
+        openai_api_key=os.getenv("OPENAI_API_KEY"),
     )
+
+
+# ---------------------------------------------------------------------------
+# LUXURY BRAND LIST (deterministic routing)
+# ---------------------------------------------------------------------------
+
+LUXURY_BRANDS = {
+    "gucci", "prada", "louis vuitton", "lv",
+    "hermes", "hermès", "dior", "balenciaga",
+    "versace", "chanel", "burberry",
+    "rolex", "cartier", "tiffany",
+    "fendi", "givenchy", "valentino",
+    "saint laurent", "ysl", "bottega veneta",
+}
+
+
+# ---------------------------------------------------------------------------
+# SPEC FAMILY ROUTING (deterministic, no LLM)
+# ---------------------------------------------------------------------------
+
+SPEC_FAMILY_MAP = {
+    # Electronics
+    "smartphone": "ELECTRONICS",
+    "mobile": "ELECTRONICS",
+    "phone": "ELECTRONICS",
+    "laptop": "ELECTRONICS",
+    "notebook": "ELECTRONICS",
+    "tablet": "ELECTRONICS",
+    "television": "ELECTRONICS",
+    "tv": "ELECTRONICS",
+    "smartwatch": "ELECTRONICS",
+    "smart watch": "ELECTRONICS",
+    "gaming console": "ELECTRONICS",
+    "console": "ELECTRONICS",
+    "camera": "ELECTRONICS",
+    "headphones": "ELECTRONICS",
+    "earbuds": "ELECTRONICS",
+    "speaker": "ELECTRONICS",
+    "electronic accessory": "ELECTRONICS",
+    "keyboard": "ELECTRONICS",
+    "mouse": "ELECTRONICS",
     
-    prompt = f"""What category does this product belong to? Return ONLY the category name (1-3 words).
-
-Product: {product_name}
-Brand: {brand}
-Description: {description}
-
-Examples:
-- "iPhone 15" → "Smartphone"
-- "Lip care set" → "Beauty & Cosmetics"
-- "Kitchen knives" → "Kitchenware"
-- "MacBook Air" → "Laptop"
-- "Bluetooth speaker" → "Audio Equipment"
-- "Samsung TV" → "Television"
-- "PlayStation 5" → "Gaming Console"
-- "Tripod" → "Camera Accessories"
-
-Category:"""
+    # Bags & Luggage
+    "backpack": "BAGS_LUGGAGE",
+    "suitcase": "BAGS_LUGGAGE",
+    "luggage": "BAGS_LUGGAGE",
+    "bag": "BAGS_LUGGAGE",
+    "handbag": "BAGS_LUGGAGE",
+    "wallet": "BAGS_LUGGAGE",
+    "briefcase": "BAGS_LUGGAGE",
     
+    # Furniture & Living
+    "sofa": "FURNITURE",
+    "couch": "FURNITURE",
+    "bed": "FURNITURE",
+    "table": "FURNITURE",
+    "chair": "FURNITURE",
+    "desk": "FURNITURE",
+    "wardrobe": "FURNITURE",
+    "cabinet": "FURNITURE",
+    
+    # Home Appliances
+    "refrigerator": "HOME_APPLIANCES",
+    "fridge": "HOME_APPLIANCES",
+    "washing machine": "HOME_APPLIANCES",
+    "dryer": "HOME_APPLIANCES",
+    "dishwasher": "HOME_APPLIANCES",
+    "oven": "HOME_APPLIANCES",
+    "microwave": "HOME_APPLIANCES",
+    "vacuum cleaner": "HOME_APPLIANCES",
+    
+    # Micromobility
+    "electric scooter": "MICROMOBILITY",
+    "e-scooter": "MICROMOBILITY",
+    "electric bike": "MICROMOBILITY",
+    "e-bike": "MICROMOBILITY",
+    "hoverboard": "MICROMOBILITY",
+    
+    # Luxury
+    "watch (luxury)": "LUXURY",
+    "handbag (luxury)": "LUXURY",
+    "jewelry": "LUXURY",
+    
+    # Health & Wellness
+    "treadmill": "HEALTH_WELLNESS",
+    "elliptical": "HEALTH_WELLNESS",
+    "exercise bike": "HEALTH_WELLNESS",
+    
+    # Baby
+    "stroller": "BABY",
+    "car seat": "BABY",
+    "high chair": "BABY",
+    "crib": "BABY",
+    
+    # Optical
+    "glasses": "OPTICAL",
+    "sunglasses": "OPTICAL",
+    "contact lenses": "OPTICAL",
+    
+    # Textiles (ZARA only for normal clothes, LUXURY for luxury brands)
+    "clothing": "TEXTILES",
+    "shoes": "TEXTILES",
+    "footwear": "TEXTILES",
+    "apparel": "TEXTILES",
+    "shirt": "TEXTILES",
+    "dress": "TEXTILES",
+    "pants": "TEXTILES",
+    "jacket": "TEXTILES",
+}
+
+
+# ---------------------------------------------------------------------------
+# SPEC INTERPRETATION MODE (deterministic, no LLM)
+# ---------------------------------------------------------------------------
+
+SPEC_INTERPRETATION_MODE = {
+    "ELECTRONICS": "CLASS_BASED",
+    "BAGS_LUGGAGE": "OBJECT_EXHAUSTIVE",
+    "FURNITURE": "OBJECT_EXHAUSTIVE",
+    "HOME_APPLIANCES": "OBJECT_EXHAUSTIVE",
+    "MICROMOBILITY": "OBJECT_EXHAUSTIVE",
+    "HEALTH_WELLNESS": "OBJECT_EXHAUSTIVE",
+    "BABY": "OBJECT_EXHAUSTIVE",
+    "OPTICAL": "OBJECT_EXHAUSTIVE",
+    "TEXTILES": "BRAND_RESTRICTED",  # ZARA ONLY
+    "LUXURY": "BRAND_RESTRICTED",     # Luxury brands only
+}
+
+
+def route_to_spec_family(insurance_object: str) -> str | None:
+    """
+    Deterministic routing from insurance object to spec family.
+    Uses substring matching to handle variations like "Smart phone", "Cell Phone", etc.
+    Returns None if no match → product is out of scope entirely.
+    """
+    obj_lower = insurance_object.strip().lower()
+    
+    # Try substring matching to handle variations
+    for key, family in SPEC_FAMILY_MAP.items():
+        if key in obj_lower:
+            return family
+    
+    return None
+
+
+def infer_insurance_object_with_llm(product_name: str, description: str, brand: str) -> str:
+    """
+    Normalize the product to its INSURANCE OBJECT — what it actually IS 
+    for insurance purposes, not its retail category.
+    
+    This must be spec-agnostic. A keyboard case is an "Electronic accessory",
+    not a "Bag" or "Case". A luxury watch is a "Watch (luxury)", not "Jewelry".
+    """
+    llm = _get_llm()
+
+    prompt = (
+        "What IS this product from an insurance classification perspective? "
+        "Return ONLY the insurance object type (1-4 words), nothing else.\n\n"
+        f"Product: {product_name}\n"
+        f"Brand: {brand}\n"
+        f"Description: {description}\n\n"
+        "CRITICAL RULES:\n"
+        "- Electronic accessories (cases, covers, keyboards for devices) → 'Electronic accessory'\n"
+        "- Standalone bags/backpacks/luggage → 'Backpack' or 'Suitcase' or 'Luggage'\n"
+        "- Luxury brands (Hermès, Rolex, Cartier, etc.) → add '(luxury)' suffix\n"
+        "- Be specific about the OBJECT, not the use case\n\n"
+        "Examples:\n"
+        '- "Apple Smart Folio for iPad" → "Electronic accessory"\n'
+        '- "Samsung Tab Keyboard Case" → "Electronic accessory"\n'
+        '- "ROG Gaming Backpack" → "Backpack"\n'
+        '- "Leather Wallet" → "Wallet"\n'
+        '- "iPhone 15 Pro" → "Smartphone"\n'
+        '- "MacBook Air" → "Laptop"\n'
+        '- "Electric Scooter" → "Electric scooter"\n'
+        '- "Rolex Submariner" → "Watch (luxury)"\n'
+        '- "Samsung QLED TV" → "Television"\n'
+        '- "Sofa" → "Sofa"\n\n'
+        "Insurance object:"
+    )
+
     try:
         response = llm.invoke(prompt)
-        category = response.content.strip().replace('"', '').replace("'", "")
-        return category if len(category) < 50 else "General Product"
+        obj = response.content.strip().replace('"', '').replace("'", "")
+        return obj if len(obj) < 50 else "General Product"
     except Exception as e:
-        print(f"⚠️ Category inference failed: {e}")
+        print(f"⚠️  Insurance object inference failed: {e}")
         return "General Product"
 
 
+# ---------------------------------------------------------------------------
+# CORE: LLM-BASED ELIGIBILITY
+# ---------------------------------------------------------------------------
+
 def analyze_eligibility_with_llm(
-    product_name: str, 
-    category: str, 
+    product_name: str,
+    insurance_object: str,
+    spec_family: str,
+    interpretation_mode: str,
     brand: str,
     price: float,
     currency: str,
-    documents: List[Document]
+    documents: List[Document],
 ) -> Dict:
     """
-    Use LLM to analyze retrieved documents and determine eligibility.
-    Uses SMART SEMANTIC MATCHING instead of exhaustive category lists.
+    Ask the LLM to determine eligibility based on the interpretation mode.
+    
+    CLASS_BASED: Product must belong to a listed product class (e.g., smartphones → mobile devices)
+    OBJECT_EXHAUSTIVE: Product must be explicitly listed (but ignoring modifiers)
+    BRAND_RESTRICTED: Product must match both object AND brand restrictions
     """
-    llm = ChatOpenAI(
-        model="gpt-4o-mini",
-        temperature=0,
-        openai_api_key=os.getenv("OPENAI_API_KEY")
-    )
-    
-    # Format documents for LLM
-    docs_text = ""
-    doc_filenames = []
-    
-    for i, doc in enumerate(documents[:6]):  
-        filename = doc.metadata.get('file_name', 'Unknown')
-        doc_filenames.append(filename)
-        docs_text += f"\n\n{'='*70}\n[DOCUMENT {i+1}]: {filename}\n{'='*70}\n{doc.page_content}\n"
-    
-    # Determine market
+    llm = _get_llm()
     market = "UAE" if currency == "AED" else "Tunisia"
-    
-    # SMART PROMPT - No exhaustive lists, uses principles
-    prompt = f"""You are an insurance eligibility classifier. Your job: Find if the product category "{category}" is covered in the specification documents.
 
-⚠️ CRITICAL RULES:
-1. Use ONLY the provided documents
-2. Do NOT use external knowledge
-3. **Same category = same answer ALWAYS** (consistency is critical)
-4. Use SEMANTIC MATCHING (meaning-based, not just exact text)
+    # --------------- build the docs block ---------------
+    real_filenames: List[str] = []
+    docs_block = ""
+    for i, doc in enumerate(documents[:6]):
+        fname = doc.metadata.get("file_name", "unknown")
+        real_filenames.append(fname)
+        docs_block += (
+            f"\n--- DOCUMENT {i+1} | {fname} ---\n"
+            f"{doc.page_content}\n"
+        )
 
-==========================================
-PRODUCT TO CLASSIFY
-==========================================
-Product Name: {product_name}
-Category: {category}
-Brand: {brand}
-Price: {price} {currency}
-Market: {market}
-==========================================
+    # --------------- enhanced prompt with interpretation modes ---------------
+    prompt = f"""You are a product-insurance eligibility classifier.
 
-SPECIFICATION DOCUMENTS ({market} ONLY)
-==========================================
-{docs_text}
-==========================================
+Your job: Determine if this product is eligible for insurance coverage based on the specification documents.
 
-🎯 CLASSIFICATION PROCESS
-==========================================
+INTERPRETATION MODE: {interpretation_mode}
 
-STEP 1: VALIDATE MARKET DOCUMENTS
--------------------------------------------
-Check: Are these {market} specification documents?
-- UAE documents: Filenames with "UAE", "ESSENTIAL", "FINAL" (NOT "_TN")
-- Tunisia documents: Filenames with "TUNISIA" or "_TN"
+===== INTERPRETATION RULES =====
 
-❌ If wrong market → NOT ELIGIBLE
-   Reason: "No {market} specification documents available"
+🔹 IF MODE = "CLASS_BASED" (e.g., ELECTRONICS):
+   - The product is eligible if it belongs to a PRODUCT CLASS mentioned in the spec
+   - Product classes are CATEGORIES of products, not individual items
+   - Examples of valid class matches:
+     • "Smartphone" / "Mobile" / "Phone" → "Mobile devices" ✅
+     • "Laptop" / "Notebook" → "Tablets & Computers" ✅
+     • "Headphones" / "Earbuds" → "Audio devices" ✅
+     • "TV" / "Television" → "Televisions" ✅
+     • "Smartwatch" / "Smart watch" → "Wearables" or "Mobile devices" ✅
+   - Check for SEMANTIC CLASS MEMBERSHIP, not exact string matching
+   
+   🚨 CRITICAL ACCESSORY RULE:
+   - Accessories (cases, covers, keyboard cases, folios, etc.) are ONLY eligible if:
+     a) The spec explicitly mentions "accessories" as a covered class, OR
+     b) The spec explicitly lists the specific accessory type
+   - If the product is an accessory and the spec only lists primary devices (phones, laptops, etc.) → NOT eligible
+   - Do NOT assume accessories are covered just because the primary device is covered
+   
+   - ALWAYS check exclusions — if explicitly excluded, NOT eligible
 
-STEP 2: CHECK LUXURY PRODUCTS (SPECIAL CASE)
--------------------------------------------
-Is this a luxury/designer product?
-- Luxury brands: Hermès, Louis Vuitton, Gucci, Chanel, Prada, Rolex, Cartier, Tiffany, Dior, Versace, Balenciaga, Fendi, Burberry, etc.
-- Price indicator: > 10,000 AED or > 5,000 TND
-- Keywords: "luxury", "designer", "haute couture", "premium collection"
+🔹 IF MODE = "OBJECT_EXHAUSTIVE" (e.g., BAGS, FURNITURE):
+   - The CORE insurance object MUST be explicitly listed in "Eligible Products" or "Included Products"
+   - Ignore modifiers/adjectives when matching — focus on the BASE product type
+   - Examples of valid matches:
+     • "Gaming Backpack" / "Travel Backpack" / "Laptop Backpack" → matches "Backpack" ✅
+     • "Leather Sofa" / "Corner Sofa" / "3-Seater Sofa" → matches "Sofa" ✅
+     • "Large Suitcase" / "Wheeled Suitcase" / "Hard-Shell Suitcase" → matches "Suitcase" ✅
+     • "Designer Handbag" / "Leather Handbag" → matches "Handbag" ✅
+   - The modifier (Gaming, Leather, Large, etc.) does NOT change the core object type
+   - If the CORE object type is not listed → NOT eligible
 
-If YES → Look for OPULENCIA_PREMIUM specification FIRST
-If NO → Continue to Step 3
+🔹 IF MODE = "BRAND_RESTRICTED" (e.g., LUXURY, TEXTILES):
+   - Product must match BOTH:
+     1. Eligible product category/object
+     2. Brand restrictions stated in the spec (e.g., "ZARA only", "luxury brands")
+   
+   🚨 CRITICAL BRAND RULES:
+   - If the spec says "ZARA only" and the brand is NOT ZARA → NOT eligible
+   - If the spec restricts to specific luxury brands and this brand is not listed → NOT eligible
+   - Do NOT infer brand eligibility from product type alone
+   - Check brand match EXPLICITLY before declaring eligible
 
-STEP 3: SEMANTIC CATEGORY MATCHING (SMART!)
--------------------------------------------
-Your task: Find if "{category}" (or its semantic equivalents) appears in the specification documents.
+===== ABSOLUTE RULES =====
+1. Use ONLY information from the provided specification documents
+2. Exclusions ALWAYS override inclusions
+3. Return the EXACT document number (1-6) that justified your decision
+4. Do NOT make up filenames, categories, or document numbers
+5. If uncertain → NOT eligible (better safe than sorry)
+6. For accessories in CLASS_BASED mode: default to NOT eligible unless explicitly covered
+7. For OBJECT_EXHAUSTIVE mode: strip modifiers to find the core object (Gaming Backpack → Backpack)
 
-🧠 SEMANTIC MATCHING RULES:
+===== PRODUCT DETAILS =====
+Product Name      : {product_name}
+Insurance Object  : {insurance_object}
+Spec Family       : {spec_family}
+Interpretation    : {interpretation_mode}
+Brand             : {brand}
+Price             : {price} {currency}
+Market            : {market}
 
-1️⃣ **PLURAL/SINGULAR EQUIVALENCE**
-   "Smartphone" = "Smartphones"
-   "Laptop" = "Laptops"
-   "Washing Machine" = "Washing Machines"
-   → Always treat singular and plural as IDENTICAL
+===== SPECIFICATION DOCUMENTS =====
+{docs_block}
 
-2️⃣ **COMMON SYNONYMS** (Use your knowledge of English)
-   "Mobile" = "Smartphone" = "Phone" = "Cell Phone"
-   "Notebook" = "Laptop" = "Portable Computer"
-   "Fridge" = "Refrigerator"
-   "TV" = "Television"
-   "E-Bike" = "Electric Bike"
-   "Headset" = "Headphone" = "Earphone" = "Earbud"
-   → Check for ALL common synonyms
-
-3️⃣ **BRAND-SPECIFIC TERMS**
-   "MacBook" → Look for "Laptops"
-   "iPad" → Look for "Tablets"
-   "AirPods" → Look for "Headphones" or "Earbuds"
-   "PlayStation" → Look for "Gaming Consoles"
-   → Strip brand names, match generic category
-
-4️⃣ **HYPHENATION/SPACING**
-   "Washing Machine" = "Washing-Machine" = "WashingMachine"
-   "Smart Watch" = "Smartwatch" = "Smart-Watch"
-   → Ignore spacing and hyphenation differences
-
-5️⃣ **DESCRIPTIVE PREFIXES** (Usually ignorable)
-   "Wireless Headphones" → Look for "Headphones"
-   "Smart TV" → Look for "TV" or "Television"
-   "Electric Scooter" → Look for "Scooter" or "Electric Scooter"
-   → Try both with and without prefixes
-
-WHERE TO SEARCH:
-✓ "Eligible Products" section
-✓ "Included Products" section
-✓ "Covered Products" section
-✓ "Product Categories" section
-✓ "Included Categories" section
-✓ Risk profile lists (e.g., "ELECTRONIC_PRODUCTS: Smartphones, Laptops...")
-
-HOW TO SEARCH:
-1. First: Look for EXACT match of "{category}"
-2. Then: Check singular/plural variant
-3. Then: Check common synonyms (from rules above)
-4. Then: Check generic category if it's a brand-specific term
-
-EXAMPLE MATCHING LOGIC:
-- Input category: "Mobile"
-  → Search for: "Mobile", "Mobiles", "Smartphone", "Smartphones", "Phone", "Phones", "Cell Phone"
-  
-- Input category: "MacBook"
-  → Strip brand → Generic: "Laptop"
-  → Search for: "Laptop", "Laptops", "Notebook", "Notebooks", "Portable Computer"
-
-- Input category: "Wireless Headphone"
-  → Remove prefix → Core: "Headphone"
-  → Search for: "Headphone", "Headphones", "Earphone", "Earphones", "Earbud", "Earbuds", "Headset"
-
-✅ If you find a match (exact OR semantic) → Category is COVERED → Continue to Step 4
-❌ If NO match found → Category is NOT COVERED → NOT ELIGIBLE
-   Reason: "Category '{category}' and its semantic equivalents not found in {market} specification documents"
-
-STEP 4: CHECK EXCLUSIONS
--------------------------------------------
-Search exclusions sections:
-✓ "Excluded Products"
-✓ "Not Covered"
-✓ "Exclusions"
-IMPORTANT: be aware the categories Textiles, Footwear, Clothing are only eligible if the brand is "ZARA".
-
-Is the product category or type in exclusions?
-✅ YES → NOT ELIGIBLE (Reason: "Product category is explicitly excluded")
-❌ NO → Continue to Step 5
-
-STEP 5: EXTRACT DETAILS (ELIGIBLE)
--------------------------------------------
-Product is ELIGIBLE! Extract:
-1. **risk_profile**: Exact risk profile code (e.g., "ELECTRONIC_PRODUCTS")
-2. **document_used**: Filename of specification used
-3. **coverage_modules**: List of coverage modules/benefits
-4. **exclusions**: General exclusions that apply
-
-==========================================
-🔍 CONSISTENCY CHECK (CRITICAL!)
-==========================================
-Before responding, ask yourself:
-
-❓ If I see another product with category "{category}" tomorrow:
-   - Would I give it the SAME result?
-   - Am I being consistent with my semantic matching rules?
-   - Did I check ALL common synonyms?
-
-❓ Verification:
-   □ Used correct {market} documents?
-   □ Applied semantic matching rules correctly?
-   □ Checked singular AND plural forms?
-   □ Checked common synonyms?
-   □ Stripped brand names to generic categories?
-   □ Same category would ALWAYS get same result?
-
-==========================================
-📤 RESPONSE FORMAT (JSON ONLY)
-==========================================
-Return ONLY valid JSON:
-
+===== REQUIRED OUTPUT =====
+Return ONLY valid JSON with this exact structure (no extra text, no markdown):
 {{
   "eligible": true or false,
-  "reason": "If NOT eligible: explain which step failed and what you searched for. If eligible: 'Product category is covered under {market} specifications'",
-  "risk_profile": "EXACT_RISK_PROFILE_CODE" or null,
-  "document_used": "filename.pdf" or null,
-  "document_type": "STANDARD",
-  "coverage_modules": ["Module 1", "Module 2", ...] or [],
-  "exclusions": ["Exclusion 1", "Exclusion 2", ...] or [],
-  "semantic_matches_checked": ["term1", "term2", "term3"] (list of synonyms you searched for)
+  "reason": "<concise explanation of why eligible or not eligible>",
+  "matched_document_index": <integer 1-6 of the document that justified the decision, or null>,
+  "risk_profile": "<risk profile code from document if eligible, or null>",
+  "coverage_modules": ["list", "of", "modules"],
+  "exclusions": ["list", "of", "exclusions"],
+  "synonyms_checked": ["list", "of", "terms", "you", "searched", "for"]
 }}
 
-Think step-by-step, apply semantic matching rules, then respond with JSON:"""
-    
+EXAMPLES OF CORRECT REASONING:
+
+Example 1 (CLASS_BASED - ELIGIBLE):
+Product: "iPhone 15 Pro", Object: "Smartphone", Mode: CLASS_BASED
+Doc mentions: "Mobile devices"
+→ eligible: true, reason: "Smartphone belongs to Mobile devices class"
+
+Example 2 (CLASS_BASED - NOT ELIGIBLE - ACCESSORY):
+Product: "Apple Smart Folio", Object: "Electronic accessory", Mode: CLASS_BASED
+Doc mentions: "Mobile devices, Tablets & Computers, Audio" (no mention of accessories)
+→ eligible: false, reason: "Accessories not explicitly covered in specification"
+
+Example 3 (CLASS_BASED - NOT ELIGIBLE - EXCLUDED):
+Product: "Microwave", Object: "Microwave", Mode: CLASS_BASED  
+Doc mentions: "Mobile devices, Computers, Audio" but excludes "Home appliances"
+→ eligible: false, reason: "Home appliances explicitly excluded"
+
+Example 4 (OBJECT_EXHAUSTIVE - NOT ELIGIBLE):
+Product: "Gaming Chair", Object: "Gaming Chair", Mode: OBJECT_EXHAUSTIVE
+Doc lists: "Sofa, Bed, Table, Desk"
+→ eligible: false, reason: "Chair (core object) not explicitly listed in eligible products"
+
+Example 5 (BRAND_RESTRICTED - NOT ELIGIBLE):
+Product: "H&M Shirt", Object: "Clothing", Mode: BRAND_RESTRICTED
+Doc says: "ZARA products only"
+→ eligible: false, reason: "Brand H&M does not match ZARA-only restriction"
+
+Example 6 (OBJECT_EXHAUSTIVE - ELIGIBLE - MODIFIER IGNORED):
+Product: "Gaming Backpack with LED", Object: "Backpack", Mode: OBJECT_EXHAUSTIVE
+Doc lists: "Backpack, Suitcase, Handbag"
+→ eligible: true, reason: "Backpack (core object) is explicitly listed"
+
+Now analyze the product above:"""
+
     try:
         response = llm.invoke(prompt)
         content = response.content.strip()
-        
-        # Clean JSON formatting
+
+        # strip markdown fences if present
         if content.startswith("```json"):
             content = content.replace("```json", "").replace("```", "").strip()
         elif content.startswith("```"):
             content = content.replace("```", "").strip()
-        
-        # Parse JSON
+
         result = json.loads(content)
-        
-        # Validate and set defaults
+
+        # --------------- ground document_used in REAL metadata ---------------
+        doc_idx = result.get("matched_document_index")
+        if doc_idx and 1 <= doc_idx <= len(real_filenames):
+            result["document_used"] = real_filenames[doc_idx - 1]
+        else:
+            result["document_used"] = None
+            # If LLM said eligible but gave no valid doc index, that's suspicious
+            if result.get("eligible"):
+                result["eligible"] = False
+                result["reason"] = (
+                    "LLM returned eligible but did not ground the match "
+                    "in a specific retrieved document."
+                )
+
+        # --------------- market-mismatch guard ---------------
+        doc_used_lower = (result.get("document_used") or "").lower()
+        if market == "UAE" and ("_tn" in doc_used_lower or "tunisia" in doc_used_lower):
+            result["eligible"] = False
+            result["reason"] = f"Market mismatch: matched Tunisia doc '{result['document_used']}' for a UAE product."
+            result["document_used"] = None
+        elif market == "Tunisia" and any(
+            tag in doc_used_lower for tag in ("uae", "essential", "final")
+        ) and "_tn" not in doc_used_lower:
+            result["eligible"] = False
+            result["reason"] = f"Market mismatch: matched UAE doc '{result['document_used']}' for a Tunisia product."
+            result["document_used"] = None
+
+        # --------------- defaults ---------------
         result.setdefault("eligible", False)
         result.setdefault("reason", "Unknown reason")
         result.setdefault("risk_profile", None)
-        result.setdefault("document_used", None)
         result.setdefault("document_type", "STANDARD")
         result.setdefault("coverage_modules", [])
         result.setdefault("exclusions", [])
-        result.setdefault("semantic_matches_checked", [])
-        
-        # Force document_type to STANDARD
+        result.setdefault("synonyms_checked", [])
         result["document_type"] = "STANDARD"
-        
-        # ==========================================
-        # POST-PROCESSING: VALIDATE MARKET MATCH
-        # ==========================================
-        if result.get("eligible"):
-            risk_profile = result.get("risk_profile", "").lower()
-            doc_used = result.get("document_used", "").lower()
-            
-            # Check for market mismatch
-            if market == "UAE":
-                # UAE product should NOT have Tunisia spec
-                if "_tn" in risk_profile or "tunisia" in doc_used:
-                    print(f"⚠️  VALIDATION FAILED: UAE product with Tunisia spec!")
-                    result = {
-                        "eligible": False,
-                        "reason": f"Market mismatch: UAE product incorrectly classified with Tunisia specification ({doc_used}). This product is not eligible.",
-                        "risk_profile": None,
-                        "document_used": None,
-                        "document_type": "STANDARD",
-                        "coverage_modules": [],
-                        "exclusions": [],
-                        "semantic_matches_checked": []
-                    }
-            elif market == "Tunisia":
-                # Tunisia product SHOULD have Tunisia spec
-                if "_tn" not in risk_profile and "tunisia" not in doc_used and \
-                   not any(x in doc_used for x in ["essential", "uae"]):
-                    print(f"⚠️  VALIDATION FAILED: Tunisia product with UAE spec!")
-                    result = {
-                        "eligible": False,
-                        "reason": f"Market mismatch: Tunisia product incorrectly classified with UAE specification ({doc_used}). This product is not eligible.",
-                        "risk_profile": None,
-                        "document_used": None,
-                        "document_type": "STANDARD",
-                        "coverage_modules": [],
-                        "exclusions": [],
-                        "semantic_matches_checked": []
-                    }
-        
-        # Log what synonyms were checked (for debugging)
-        if result.get("semantic_matches_checked"):
-            print(f"   🔍 Checked synonyms: {', '.join(result['semantic_matches_checked'][:5])}")
-        
-        return result
-        
-    except json.JSONDecodeError as e:
-        print(f"❌ LLM returned invalid JSON: {e}")
-        print(f"Response was: {content[:200]}...")
-        return {
-            "eligible": False,
-            "reason": f"Failed to parse classification response: {str(e)}",
-            "risk_profile": None,
-            "document_used": None,
-            "document_type": "STANDARD",
-            "coverage_modules": [],
-            "exclusions": [],
-            "semantic_matches_checked": []
-        }
-    except Exception as e:
-        print(f"❌ Classification error: {e}")
-        return {
-            "eligible": False,
-            "reason": f"Classification error: {str(e)}",
-            "risk_profile": None,
-            "document_used": None,
-            "document_type": "STANDARD",
-            "coverage_modules": [],
-            "exclusions": [],
-            "semantic_matches_checked": []
-        }
 
+        # rename for downstream compatibility
+        result["semantic_matches_checked"] = result.pop("synonyms_checked", [])
+
+        return result
+
+    except json.JSONDecodeError as e:
+        print(f"⚠️  LLM returned invalid JSON: {e}")
+        return _empty_result(f"Failed to parse LLM response: {e}")
+    except Exception as e:
+        print(f"⚠️  Classification error: {e}")
+        return _empty_result(str(e))
+
+
+def _empty_result(reason: str) -> Dict:
+    return {
+        "eligible": False,
+        "reason": reason,
+        "risk_profile": None,
+        "document_used": None,
+        "document_type": "STANDARD",
+        "coverage_modules": [],
+        "exclusions": [],
+        "semantic_matches_checked": [],
+    }
+
+
+# ---------------------------------------------------------------------------
+# MAIN TOOL
+# ---------------------------------------------------------------------------
 
 @tool
 def classify_product(
@@ -355,109 +447,67 @@ def classify_product(
     brand: str = "",
     price: Union[float, int, str] = 0.0,
     currency: str = "AED",
-    description: str = ""
+    description: str = "",
 ) -> dict:
     """
-    Classify product and determine insurance eligibility.
-    
-    Now with SMART SEMANTIC MATCHING - no exhaustive category lists needed!
-    
-    This tool:
-    1. Infers category if missing (using LLM)
-    2. Retrieves MARKET-SPECIFIC specification documents from RAG
-    3. Analyzes eligibility using SEMANTIC MATCHING (meaning-based)
-    4. Returns structured classification
-    
+    Classify product and determine insurance eligibility using spec-family routing.
+
+    Pipeline:
+        1. Normalize to INSURANCE OBJECT (spec-agnostic: "Electronic accessory", not "Case")
+        2. Route to SPEC FAMILY (deterministic: ELECTRONICS, BAGS_LUGGAGE, etc.)
+        3. Split TEXTILES into TEXTILES (ZARA) or LUXURY (luxury brands) based on brand
+        4. Determine INTERPRETATION MODE (CLASS_BASED vs OBJECT_EXHAUSTIVE vs BRAND_RESTRICTED)
+        5. Retrieve FAMILY-SCOPED docs from RAG (no cross-contamination)
+        6. LLM checks eligibility using the correct interpretation mode
+
+    This prevents false positives and enables correct class-based matching for electronics.
+
     Args:
         product_name: Name of the product
-        category: Product category (inferred if missing)
+        category: Insurance object (inferred if missing)
         brand: Brand name
         price: Product price
         currency: AED (UAE) or TND (Tunisia)
         description: Product description
-    
+
     Returns:
         dict with:
         - product info (name, brand, category, price, currency, market)
         - classification (eligible, reason, risk_profile, document_type, coverage_modules, exclusions)
     """
-    # Convert price
+    # --------------- price normalisation ---------------
     try:
         price_float = float(price) if price else 0.0
     except (ValueError, TypeError):
         price_float = 0.0
-    
-    # Determine market
+
     market = "UAE" if currency == "AED" else "Tunisia" if currency == "TND" else "UAE"
-    
-    # Infer category if missing
+
+    # --------------- insurance object normalization if missing ---------------
     original_category = category
     if not category or category.strip() in ["N/A", "", "Unknown", "General", "None"]:
-        print(f"🔍 Inferring category for: {product_name[:50]}...")
-        category = infer_category_with_llm(product_name, description, brand)
-        print(f"   Category: '{original_category or 'N/A'}' → '{category}'")
-    
+        print(f"🔍 Inferring insurance object for: {product_name[:50]}...")
+        category = infer_insurance_object_with_llm(product_name, description, brand)
+        print(f"   '{original_category or 'N/A'}' → '{category}'")
+
     print(f"\n{'='*70}")
-    print(f"📋 CLASSIFYING PRODUCT")
+    print(f"📦 CLASSIFYING PRODUCT")
     print(f"{'='*70}")
-    print(f"Name: {product_name[:60]}")
-    print(f"Category: {category}")
-    print(f"Brand: {brand or 'N/A'}")
-    print(f"Price: {price_float} {currency}")
-    print(f"Market: {market}")
+    print(f"  Name             : {product_name[:60]}")
+    print(f"  Insurance Object : {category}")
+    print(f"  Brand            : {brand or 'N/A'}")
+    print(f"  Price            : {price_float} {currency}")
+    print(f"  Market           : {market}")
     print(f"{'='*70}\n")
-    
-    # ==========================================
-    # STEP 2: RETRIEVE MARKET-SPECIFIC DOCUMENTS
-    # ==========================================
+
+    # --------------- RAG retrieval — FAMILY-SCOPED ---------------
     from ai_agent.rag.retriever import retrieve_specs_raw
+
+    # Route to spec family
+    spec_family = route_to_spec_family(category)
     
-    # Build market-specific query
-    market_hint = "UAE ESSENTIAL" if market == "UAE" else "TUNISIA TN"
-    query = f"{product_name} {category} {brand} {market_hint} insurance specification eligible coverage"
-    
-    print(f"🔍 Retrieving {market}-specific specifications...")
-    print(f"   Query: {query[:80]}...")
-    
-    try:
-        # CRITICAL: Pass market parameter to filter docs
-        docs = retrieve_specs_raw(query, k=6, market=market)
-        print(f"✓  Retrieved {len(docs)} {market}-specific documents")
-    except Exception as e:
-        print(f"❌  Retrieval failed: {e}")
-        docs = []
-    
-    # Remove duplicates
-    seen_files = set()
-    unique_docs = []
-    for doc in docs:
-        filename = doc.metadata.get('file_name', '')
-        if filename and filename not in seen_files:
-            seen_files.add(filename)
-            unique_docs.append(doc)
-    
-    # Sort: STANDARD specs first
-    def sort_key(doc):
-        filename = doc.metadata.get('file_name', '').lower()
-        if 'garantyaffinity' in filename or 'dev_spec' in filename:
-            return 0
-        elif 'opulencia' in filename:
-            return 1
-        elif 'assurmax' in filename:
-            return 2
-        else:
-            return 3
-    
-    unique_docs.sort(key=sort_key)
-    
-    print(f"\n📄 Using {len(unique_docs)} unique {market} documents:")
-    for doc in unique_docs:
-        filename = doc.metadata.get('file_name', 'Unknown')
-        doc_type = "📋" if any(x in filename.lower() for x in ['garantyaffinity', 'dev_spec', 'opulencia']) else "⚡"
-        print(f"   {doc_type} {filename}")
-    
-    if not unique_docs:
-        print(f"\n❌ No {market} specification documents found for category '{category}'\n")
+    if spec_family is None:
+        print(f"\n   ⚠️  Insurance object '{category}' does not map to any known spec family")
         return {
             "product_name": product_name,
             "brand": brand,
@@ -465,45 +515,89 @@ def classify_product(
             "price": price_float,
             "currency": currency,
             "market": market,
-            "classification": {
-                "eligible": False,
-                "reason": f"No {market} insurance specification documents found for product category '{category}'",
-                "risk_profile": None,
-                "document_used": None,
-                "document_type": "STANDARD",
-                "coverage_modules": [],
-                "exclusions": []
-            }
+            "classification": _empty_result(
+                f"Insurance object '{category}' is not covered by any available specification family."
+            ),
         }
     
-    # ==========================================
-    # STEP 3: ANALYZE ELIGIBILITY WITH SEMANTIC MATCHING
-    # ==========================================
-    print(f"\n🤖 Analyzing eligibility with SEMANTIC MATCHING...")
+    # 🔥 TEXTILES SPLIT LOGIC: Separate ZARA from LUXURY brands
+    if spec_family == "TEXTILES":
+        brand_lower = (brand or "").lower()
+        
+        if brand_lower in LUXURY_BRANDS:
+            spec_family = "LUXURY"
+            print(f"   🔀 Rerouting: TEXTILES → LUXURY (luxury brand detected)")
+    
+    # Get interpretation mode
+    interpretation_mode = SPEC_INTERPRETATION_MODE.get(spec_family, "OBJECT_EXHAUSTIVE")
+    
+    print(f"   Spec Family       : {spec_family}")
+    print(f"   Interpretation    : {interpretation_mode}")
+    
+    # Query targets the spec family, not the product
+    query = f"{spec_family} {market} insurance specification eligible products"
+
+    print(f"🔎 Retrieving {spec_family} specs for {market}...")
+    print(f"   Query: {query}")
+
+    try:
+        docs = retrieve_specs_raw(query, k=3, market=market)
+        print(f"   Retrieved {len(docs)} documents")
+    except Exception as e:
+        print(f"   ❌ Retrieval failed: {e}")
+        docs = []
+
+    # --------------- dedup + sort ---------------
+    seen, unique_docs = set(), []
+    for doc in docs:
+        fname = doc.metadata.get("file_name", "")
+        if fname and fname not in seen:
+            seen.add(fname)
+            unique_docs.append(doc)
+
+    print(f"\n   Using {len(unique_docs)} unique docs:")
+    for d in unique_docs:
+        print(f"     • {d.metadata.get('file_name', 'unknown')}")
+
+    # --------------- no docs → early return ---------------
+    if not unique_docs:
+        print(f"\n   ⚠️  No {market} spec docs found for '{category}'")
+        return {
+            "product_name": product_name,
+            "brand": brand,
+            "category": category,
+            "price": price_float,
+            "currency": currency,
+            "market": market,
+            "classification": _empty_result(
+                f"No {market} insurance specification documents found for product category '{category}'."
+            ),
+        }
+
+    # --------------- LLM classification with interpretation mode ---------------
+    print(f"\n🤖 Analyzing eligibility (mode: {interpretation_mode})...")
     classification = analyze_eligibility_with_llm(
-        product_name, 
-        category, 
+        product_name,
+        category,
+        spec_family,
+        interpretation_mode,
         brand,
         price_float,
         currency,
         unique_docs
     )
-    
-    # Print result
-    if classification['eligible']:
-        print(f"✅  ELIGIBLE for insurance")
-        print(f"   Risk Profile: {classification.get('risk_profile', 'N/A')}")
-        print(f"   Document Used: {classification.get('document_used', 'N/A')}")
-        print(f"✓  Market validation: PASSED")
+
+    # --------------- log & return ---------------
+    if classification.get("eligible"):
+        print(f"\n✅ ELIGIBLE")
+        print(f"   Risk Profile : {classification.get('risk_profile')}")
+        print(f"   Doc Used     : {classification.get('document_used')}")
     else:
-        print(f"❌  NOT ELIGIBLE")
-        print(f"   Reason: {classification.get('reason', 'Unknown')[:120]}")
-    
+        print(f"\n❌ NOT ELIGIBLE")
+        print(f"   Reason: {classification.get('reason', 'Unknown')}")
+
     print(f"{'='*70}\n")
-    
-    # ==========================================
-    # STEP 4: RETURN STRUCTURED RESULT
-    # ==========================================
+
     return {
         "product_name": product_name,
         "brand": brand,
@@ -511,76 +605,71 @@ def classify_product(
         "price": price_float,
         "currency": currency,
         "market": market,
-        "classification": classification
+        "classification": classification,
     }
 
 
-# ==========================================
-# TEST FUNCTION
-# ==========================================
+# ---------------------------------------------------------------------------
+# QUICK SMOKE TEST
+# ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    """Test the semantic matching classifier"""
-    
-    print("\n" + "="*80)
-    print("TESTING SEMANTIC MATCHING PRODUCT CLASSIFIER")
-    print("="*80)
-    
-    # Test with various category formats to prove consistency
+    print("\n" + "=" * 80)
+    print("TESTING PRODUCT CLASSIFIER")
+    print("=" * 80)
+
     test_products = [
-        # Smartphones - different ways to say it
-        {"product_name": "iPhone 15 Pro Max", "category": "Smartphone", "brand": "Apple", "price": 4500, "currency": "AED"},
-        {"product_name": "Samsung Galaxy S24", "category": "Mobile", "brand": "Samsung", "price": 3200, "currency": "AED"},
-        {"product_name": "Google Pixel 8", "category": "Phone", "brand": "Google", "price": 2800, "currency": "AED"},
-        {"product_name": "OnePlus 12", "category": "Cell Phone", "brand": "OnePlus", "price": 3000, "currency": "AED"},
-        
-        # Laptops - different ways to say it
-        {"product_name": "MacBook Pro 16", "category": "Laptop", "brand": "Apple", "price": 12000, "currency": "AED"},
-        {"product_name": "Dell XPS 15", "category": "Notebook", "brand": "Dell", "price": 8000, "currency": "AED"},
-        {"product_name": "MacBook Air M2", "category": "MacBook", "brand": "Apple", "price": 6000, "currency": "AED"},
-        
-        # TVs - different ways to say it
-        {"product_name": "Samsung QLED 65", "category": "TV", "brand": "Samsung", "price": 5000, "currency": "AED"},
-        {"product_name": "LG OLED 55", "category": "Television", "brand": "LG", "price": 4500, "currency": "AED"},
-        {"product_name": "Sony Bravia 75", "category": "Smart TV", "brand": "Sony", "price": 7000, "currency": "AED"},
+        # Smartphones — different ways to say it
+        {"product_name": "iPhone 15 Pro Max",  "category": "Smartphone",      "brand": "Apple",    "price": 4500,  "currency": "AED"},
+        {"product_name": "Samsung Galaxy S24", "category": "Mobile",          "brand": "Samsung",  "price": 3200,  "currency": "AED"},
+        {"product_name": "Google Pixel 8",     "category": "Phone",           "brand": "Google",   "price": 2800,  "currency": "AED"},
+        {"product_name": "OnePlus 12",         "category": "Cell Phone",      "brand": "OnePlus",  "price": 3000,  "currency": "AED"},
+
+        # Laptops — different ways to say it
+        {"product_name": "MacBook Pro 16",     "category": "Laptop",          "brand": "Apple",    "price": 12000, "currency": "AED"},
+        {"product_name": "Dell XPS 15",        "category": "Notebook",        "brand": "Dell",     "price": 8000,  "currency": "AED"},
+        {"product_name": "MacBook Air M2",     "category": "MacBook",         "brand": "Apple",    "price": 6000,  "currency": "AED"},
+
+        # TVs — different ways to say it
+        {"product_name": "Samsung QLED 65",    "category": "TV",              "brand": "Samsung",  "price": 5000,  "currency": "AED"},
+        {"product_name": "LG OLED 55",         "category": "Television",      "brand": "LG",       "price": 4500,  "currency": "AED"},
+        {"product_name": "Sony Bravia 75",     "category": "Smart TV",        "brand": "Sony",     "price": 7000,  "currency": "AED"},
     ]
-    
+
     results_by_category_type = {}
-    
+
     for product in test_products:
         result = classify_product.invoke(product)
-        
-        # Group by category type
-        category_type = product["product_name"].split()[0]  # iPhone, Samsung, Google, etc.
+
+        category_type = product["product_name"].split()[0]
         if category_type not in results_by_category_type:
             results_by_category_type[category_type] = []
-        
+
         results_by_category_type[category_type].append({
-            "name": result['product_name'],
-            "category": result['category'],
-            "eligible": result['classification']['eligible'],
-            "risk_profile": result['classification'].get('risk_profile')
+            "name": result["product_name"],
+            "category": result["category"],
+            "eligible": result["classification"]["eligible"],
+            "risk_profile": result["classification"].get("risk_profile"),
         })
-    
-    # Check consistency
+
+    # Consistency check
     print(f"\n{'='*80}")
     print("CONSISTENCY CHECK")
     print(f"{'='*80}\n")
-    
-    print("📱 SMARTPHONES (should all have same eligibility):")
-    for result in results_by_category_type.get("iPhone", []) + results_by_category_type.get("Samsung", []) + \
-                  results_by_category_type.get("Google", []) + results_by_category_type.get("OnePlus", []):
-        status = "✅" if result["eligible"] else "❌"
-        print(f"  {status} {result['name'][:25]:25} | Category: {result['category']:15} | Eligible: {result['eligible']}")
-    
-    print("\n💻 LAPTOPS (should all have same eligibility):")
-    for result in results_by_category_type.get("MacBook", []) + results_by_category_type.get("Dell", []):
-        status = "✅" if result["eligible"] else "❌"
-        print(f"  {status} {result['name'][:25]:25} | Category: {result['category']:15} | Eligible: {result['eligible']}")
-    
-    print("\n📺 TVs (should all have same eligibility):")
-    for result in results_by_category_type.get("Samsung", []) + results_by_category_type.get("LG", []) + \
-                  results_by_category_type.get("Sony", []):
-        if "TV" in result["name"] or "OLED" in result["name"] or "Bravia" in result["name"]:
-            status = "✅" if result["eligible"] else "❌"
-            print(f"  {status} {result['name'][:25]:25} | Category: {result['category']:15} | Eligible: {result['eligible']}")
+
+    print("📱 SMARTPHONES:")
+    for key in ("iPhone", "Samsung", "Google", "OnePlus"):
+        for r in results_by_category_type.get(key, []):
+            if any(x in r["name"] for x in ("iPhone", "Galaxy S", "Pixel", "OnePlus")):
+                print(f"   {r['name'][:25]:25} | Category: {r['category']:15} | Eligible: {r['eligible']}")
+
+    print("\n💻 LAPTOPS:")
+    for key in ("MacBook", "Dell"):
+        for r in results_by_category_type.get(key, []):
+            print(f"   {r['name'][:25]:25} | Category: {r['category']:15} | Eligible: {r['eligible']}")
+
+    print("\n📺 TVs:")
+    for key in ("Samsung", "LG", "Sony"):
+        for r in results_by_category_type.get(key, []):
+            if any(x in r["name"] for x in ("QLED", "OLED", "Bravia")):
+                print(f"   {r['name'][:25]:25} | Category: {r['category']:15} | Eligible: {r['eligible']}")

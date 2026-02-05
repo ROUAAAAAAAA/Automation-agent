@@ -1,7 +1,7 @@
 [
   {
     "brand": "Huawei",
-    "price": 1123,
+    "price": "1123",
     "category": "Wearables",
     "currency": "AED",
     "in_stock": true,
@@ -23,21 +23,10 @@
     "product_url": null,
     "scraped_from": "noon.com"
   },
-  {
-    "brand": "Nabaat",
-    "price": "null",
-    "category": "Kitchen & Dining",
-    "currency": "AED",
-    "in_stock": false,
-    "image_url": "https://f.nooncdn.com/p/pzsku/ZAB2FD67BB5AF45D20C6AZ/45/1760958003/15e28933-3a24-471d-8a7b-3409afe1e2ff.jpg?width=800",
-    "description": "The Nabaat crystal clear table protector is designed to protect your furniture while showcasing its beauty. This 1mm thick PVC cover is waterproof, heat resistant up to 80°C, and non-breakable, making it ideal for various surfaces including dining tables, office desks, and more.",
-    "product_name": "1mm Thick Transparent Table Cover for 4 to 6 Seater 36 X 53 Inch PVC Dining Table Protector Waterproof, Heat Resistant, Non-Breakable Clear Plastic Table Protector Pads",
-    "product_url": null,
-    "scraped_from": "noon.com"
-  },
+ 
   {
     "brand": "Apple",
-    "price": 3479,
+    "price": "3479",
     "category": "Mobiles & Accessories",
     "currency": "AED",
     "in_stock": true,
@@ -109,7 +98,7 @@
   },
   {
     "brand": "Lingwei",
-    "price": 81.75,
+    "price": "81.75",
     "category": "Wall Stickers & Murals",
     "currency": "AED",
     "in_stock": true,
@@ -121,7 +110,7 @@
   },
   {
     "brand": "Apple",
-    "price": 3049,
+    "price": "3049",
     "category": "Laptops",
     "currency": "AED",
     "in_stock": true,
@@ -157,7 +146,7 @@
   },
   {
     "brand": "Beinoen",
-    "price": 76,
+    "price": "76",
     "category": "Baby Products",
     "currency": "AED",
     "in_stock": true,
@@ -203,18 +192,7 @@
     "product_url": null,
     "scraped_from": "noon.com"
   },
-  {
-    "brand": "Yezdi",
-    "price": "null",
-    "category": "Motorcycles",
-    "currency": "AED",
-    "in_stock": false,
-    "image_url": "https://f.nooncdn.com/p/pzsku/ZF47E9ADC05E6FA7F897AZ/45/1765556702/c8720c06-afd3-4ffc-86ba-bc29d1f41bf9.jpg?width=800",
-    "description": "Bike Body Cover Compatible with Yezdi Scrambler with All Variants Scratch-Proof, Buckle Belt – Rain, UV & Dust Resistant Windproof & All-Weather Shield (Black Color).",
-    "product_name": "Bike Body Cover Compatible with Yezdi Scrambler",
-    "product_url": null,
-    "scraped_from": "noon.com"
-  },
+ 
   {
     "brand": "GoPro",
     "price": 29,

@@ -14,7 +14,7 @@ def run_workflow_from_json(json_path: str, max_products: int = 8) -> str:
     """
     json_path = Path(json_path)
     if not json_path.exists():
-        print("❌ JSON file not found.")
+        print(" JSON file not found.")
         return None
 
     # Step 1: Load products into database
@@ -25,10 +25,10 @@ def run_workflow_from_json(json_path: str, max_products: int = 8) -> str:
     try:
         added_count = load_products_from_json(str(json_path))
         if added_count == 0:
-            print("⚠️  No products were added. Check your JSON data quality.")
+            print("  No products were added. Check your JSON data quality.")
             # Continue anyway to process existing products
     except Exception as e:
-        print(f"❌ Failed to load products: {e}")
+        print(f" Failed to load products: {e}")
         traceback.print_exc()
         return None
 
@@ -64,10 +64,10 @@ def run_workflow_from_json(json_path: str, max_products: int = 8) -> str:
         partner = db.query(Partner).filter_by(company_name=partner_name).first()
         
         if not partner:
-            print(f"❌ No partner found with name: {partner_name}")
+            print(f" No partner found with name: {partner_name}")
             return None
         
-        print(f"✅ Found partner: {partner.company_name} (ID: {partner.partner_id})")
+        print(f" Found partner: {partner.company_name} (ID: {partner.partner_id})")
 
         # Step 3: Query products for THIS PARTNER ONLY
         print("\\n" + "="*70)
@@ -88,11 +88,11 @@ def run_workflow_from_json(json_path: str, max_products: int = 8) -> str:
         )
 
         if not products:
-            print(f"❌ No valid products found for partner: {partner.company_name}")
+            print(f" No valid products found for partner: {partner.company_name}")
             print("   Check if products were loaded successfully in Step 1.")
             return None
         
-        print(f"✅ Found {len(products)} valid products for {partner.company_name}")
+        print(f" Found {len(products)} valid products for {partner.company_name}")
         print(f"   Currency: {products[0].currency}")
         print(f"   Price range: {min(p.price for p in products):.0f} - {max(p.price for p in products):.0f}")
 
@@ -125,7 +125,7 @@ def run_workflow_from_json(json_path: str, max_products: int = 8) -> str:
                 print(f"               Result: {'✅ ELIGIBLE' if eligible else '❌ NOT ELIGIBLE'}")
 
             except Exception as exc:
-                print(f"    ⚠️  AI agent error: {exc}")
+                print(f"      AI agent error: {exc}")
                 agent_output = {
                     "eligible": False,
                     "error": str(exc),
@@ -164,7 +164,7 @@ def run_workflow_from_json(json_path: str, max_products: int = 8) -> str:
             json.dump(results, f, indent=2, ensure_ascii=False)
 
         eligible_count = sum(1 for pkg in results["packages"] if pkg["eligible"])
-        print(f"\\n✅ SUCCESS!")
+        print(f"\\n SUCCESS!")
         print(f"   Partner: {partner.company_name}")
         print(f"   Processed: {len(products)} products")
         print(f"   Eligible: {eligible_count}")
@@ -173,7 +173,7 @@ def run_workflow_from_json(json_path: str, max_products: int = 8) -> str:
         return str(out_file)
 
     except Exception as e:
-        print(f"\\n❌ Workflow error: {e}")
+        print(f"\\n Workflow error: {e}")
         traceback.print_exc()
         db.rollback()
         return None

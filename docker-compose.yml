@@ -12,7 +12,7 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql  # Persists data
+      - postgres_data:/var/lib/postgresql  
       - ./database/migrations:/docker-entrypoint-initdb.d  
 
 volumes:

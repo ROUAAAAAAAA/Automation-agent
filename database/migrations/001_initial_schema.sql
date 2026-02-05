@@ -3,7 +3,7 @@ CREATE TABLE partners (
     partner_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_name VARCHAR(255) NOT NULL,
     website_url VARCHAR(500) NOT NULL,
-    country VARCHAR(2) NOT NULL,
+    country VARCHAR(10) NOT NULL,
     status VARCHAR(50) DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -17,7 +17,7 @@ CREATE TABLE products (
     category VARCHAR(255),
     brand VARCHAR(255),
     price DECIMAL(10,2) NOT NULL,
-    currency VARCHAR(3) NOT NULL,
+    currency VARCHAR(10) NOT NULL,
     product_url TEXT,
     image_url TEXT,
     source_website VARCHAR(255),

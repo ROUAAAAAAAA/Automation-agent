@@ -13,7 +13,7 @@ import concurrent.futures
 import threading
 import queue
 
-# Database imports
+
 current_dir = Path(__file__).parent
 parent_dir = current_dir.parent
 sys.path.insert(0, str(parent_dir))
@@ -28,7 +28,7 @@ if not API_KEY:
 
 MAX_PAGES = 100
 POLL_INTERVAL = 1
-MAX_WORKERS = 10  # Parallel processing threads
+MAX_WORKERS = 10  
 
 PRODUCT_SCHEMA = {
     "type": "object",
@@ -149,9 +149,7 @@ def format_time(seconds: float) -> str:
         secs = seconds % 60
         return f"{hours}h {minutes}m {secs:.0f}s"
 
-# ============================================================
-# ASYNC BATCH DATABASE INSERTION (OPTIMIZED)
-# ============================================================
+
 
 class AsyncDatabaseInserter:
     """
@@ -168,12 +166,12 @@ class AsyncDatabaseInserter:
         
         db = SessionLocal()
         try:
-            # Optimized: Only load recent 10K URLs (not 100K)
+         
             self.seen_urls = set(
                 url for (url,) in db.query(Product.product_url)
                 .filter_by(partner_id=partner_id)
                 .order_by(Product.scraped_at.desc())
-                .limit(10_000)  # Reduced from 100K for faster startup
+                .limit(10_000)  
             )
         finally:
             db.close()
@@ -186,7 +184,7 @@ class AsyncDatabaseInserter:
         }
         self.stats_lock = threading.Lock()
         
-        # Start background writer thread
+        
         self.writer_thread = threading.Thread(target=self._writer_loop, daemon=True)
         self.writer_thread.start()
     
@@ -295,10 +293,10 @@ class AsyncDatabaseInserter:
             db.commit()
             with self.stats_lock:
                 self.stats["added"] += len(batch)
-            print(f"  ✅ Inserted {len(batch)} products (Total: {self.stats['added']})")
+            print(f"   Inserted {len(batch)} products (Total: {self.stats['added']})")
         except Exception as e:
             db.rollback()
-            print(f"  ❌ Batch insert failed: {e}")
+            print(f"   Batch insert failed: {e}")
             # Fallback: try individual inserts
             for product in batch:
                 try:
@@ -321,9 +319,7 @@ class AsyncDatabaseInserter:
         with self.stats_lock:
             return self.stats.copy()
 
-# ============================================================
-# PARALLEL PAGE PROCESSING
-# ============================================================
+
 
 def process_page(page_data):
     """Process a single page's products (runs in parallel)"""
@@ -343,13 +339,11 @@ def process_page(page_data):
             page_products.append(product)
             
     except Exception as e:
-        print(f"  ⚠️  Page {idx} error: {e}")
+        print(f"    Page {idx} error: {e}")
     
     return page_products
 
-# ============================================================
-# SCRAPING + DATABASE (UNIFIED & OPTIMIZED)
-# ============================================================
+
 
 def crawl_entire_site(start_url: str) -> Dict[str, Any]:
     total_start = time.time()
@@ -360,8 +354,8 @@ def crawl_entire_site(start_url: str) -> Dict[str, Any]:
     start_domain = parsed_start.netloc.replace("www.", "")
     start_tld = start_domain.split('.')[-1]
 
-    print(f"\n🚀 Starting optimized crawl: {start_domain}")
-    print(f"🔗 Start URL: {start_url}\n")
+    print(f"\n Starting  crawl: {start_domain}")
+    print(f" Start URL: {start_url}\n")
 
     partner_name = start_domain.split(".")[0].title()
     if "noon" in partner_name.lower():
@@ -389,9 +383,9 @@ def crawl_entire_site(start_url: str) -> Dict[str, Any]:
             db.add(partner)
             db.commit()
             db.refresh(partner)
-            print(f"✅ Created partner: {partner_name} ({country_code})")
+            print(f" Created partner: {partner_name} ({country_code})")
         else:
-            print(f"✅ Found partner: {partner_name} ({country_code})")
+            print(f" Found partner: {partner_name} ({country_code})")
         
         partner_id = partner.partner_id
     finally:
@@ -401,7 +395,7 @@ def crawl_entire_site(start_url: str) -> Dict[str, Any]:
     inserter = AsyncDatabaseInserter(partner_id, start_domain, batch_size=100)
 
     map_start = time.time()
-    print("📡 Step 1: Discovering URLs...")
+    print(" Step 1: Discovering URLs...")
     try:
         map_result = client.map(
             url=start_url, 
@@ -419,12 +413,12 @@ def crawl_entire_site(start_url: str) -> Dict[str, Any]:
             if urlparse(url).netloc.replace("www.", "").split('.')[-1] == start_tld
         ]
         
-        print(f"✅ Discovered {len(discovered_urls)} URLs")
+        print(f" Discovered {len(discovered_urls)} URLs")
         
         # ============================================================
         # PRE-FILTER: Skip already scraped URLs
         # ============================================================
-        print(f"🔍 Checking for already scraped URLs...")
+        print(f" Checking for already scraped URLs...")
         
         db = SessionLocal()
         try:
@@ -446,12 +440,12 @@ def crawl_entire_site(start_url: str) -> Dict[str, Any]:
         skipped = len(discovered_urls) - len(filtered_urls)
         
         map_time = time.time() - map_start
-        print(f"✅ Found {len(filtered_urls)} NEW URLs (skipped {skipped} already scraped)")
-        print(f"⏱️  URL filtering completed in {format_time(map_time)}\n")
+        print(f" Found {len(filtered_urls)} NEW URLs (skipped {skipped} already scraped)")
+        print(f"  URL filtering completed in {format_time(map_time)}\n")
         
         if not filtered_urls:
             inserter.close()
-            print("ℹ️  No new URLs to scrape - all products are up to date!")
+            print("  No new URLs to scrape ")
             return {
                 "success": True,
                 "partner_id": str(partner_id),
@@ -461,7 +455,7 @@ def crawl_entire_site(start_url: str) -> Dict[str, Any]:
             }
             
     except Exception as e:
-        print(f"❌ Map failed: {e}")
+        print(f"Map failed: {e}")
         inserter.close()
         return {
             "success": False, 
@@ -470,7 +464,7 @@ def crawl_entire_site(start_url: str) -> Dict[str, Any]:
         }
 
     scrape_start = time.time()
-    print(f"🔥 Step 2: Batch scraping {len(filtered_urls)} NEW URLs...")
+    print(f" Batch scraping {len(filtered_urls)} NEW URLs...")
     try:
         batch_job = client.batch_scrape(
             urls=filtered_urls,
@@ -482,10 +476,10 @@ def crawl_entire_site(start_url: str) -> Dict[str, Any]:
         
         pages = batch_job.data if hasattr(batch_job, 'data') else []
         scrape_time = time.time() - scrape_start
-        print(f"✅ Scraped {len(pages)} pages in {format_time(scrape_time)}\n")
+        print(f" Scraped {len(pages)} pages in {format_time(scrape_time)}\n")
         
     except Exception as e:
-        print(f"❌ Batch scrape failed: {e}")
+        print(f" Batch scrape failed: {e}")
         inserter.close()
         return {
             "success": False, 
@@ -497,7 +491,7 @@ def crawl_entire_site(start_url: str) -> Dict[str, Any]:
         }
 
     processing_start = time.time()
-    print(f"⚡ Step 3: Processing {len(pages)} pages with {MAX_WORKERS} parallel workers...\n")
+    print(f"  Processing {len(pages)} pages with {MAX_WORKERS} parallel workers...\n")
     
     # OPTIMIZED: Parallel page processing with ThreadPoolExecutor
     with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
@@ -510,7 +504,7 @@ def crawl_entire_site(start_url: str) -> Dict[str, Any]:
                 inserter.add_product(product)
     
     # Wait for background writer to finish
-    print(f"\n⏳ Waiting for database writes to complete...")
+    print(f"\n Waiting for database writes to complete...")
     inserter.close()
     
     stats = inserter.get_stats()
@@ -519,16 +513,16 @@ def crawl_entire_site(start_url: str) -> Dict[str, Any]:
     total_time = time.time() - total_start
 
     print("\n" + "="*70)
-    print("🎉 SCRAPING COMPLETE")
+    print(" SCRAPING COMPLETE")
     print("="*70)
     print(f"Partner       : {partner_name} ({country_code})")
-    print(f"✅ Added      : {stats['added']}")
-    print(f"🔄 Duplicates : {stats['duplicates']}")
-    print(f"⏭️  Skipped    : {stats['skipped']} (already scraped)")
-    print(f"❌ Invalid    : {stats['invalid']}")
-    print(f"📊 Total      : {stats['total']}")
+    print(f" Added      : {stats['added']}")
+    print(f" Duplicates : {stats['duplicates']}")
+    print(f"  Skipped    : {stats['skipped']} (already scraped)")
+    print(f" Invalid    : {stats['invalid']}")
+    print(f" Total      : {stats['total']}")
     print("="*70)
-    print("⏱️  TIMING BREAKDOWN")
+    print("  TIMING BREAKDOWN")
     print("="*70)
     print(f"Database Setup : {format_time(db_setup_time)}")
     print(f"URL Discovery  : {format_time(map_time)}")
@@ -541,8 +535,8 @@ def crawl_entire_site(start_url: str) -> Dict[str, Any]:
     if total_time > 0 and len(pages) > 0:
         pages_per_sec = len(pages) / total_time
         products_per_sec = stats['added'] / total_time if stats['added'] > 0 else 0
-        print(f"⚡ Speed       : {pages_per_sec:.1f} pages/sec")
-        print(f"⚡ Speed       : {products_per_sec:.1f} products/sec")
+        print(f" Speed       : {pages_per_sec:.1f} pages/sec")
+        print(f" Speed       : {products_per_sec:.1f} products/sec")
         print("="*70)
 
     return {
@@ -563,20 +557,16 @@ def crawl_entire_site(start_url: str) -> Dict[str, Any]:
         }
     }
 
-# ============================================================
-# CLI
-# ============================================================
+
 
 if __name__ == "__main__":
     start_url = sys.argv[1] if len(sys.argv) > 1 else "https://www.virginmegastore.ae/en"
     
-    print("=" * 70)
-    print("🚀 OPTIMIZED SCRAPER v3.0 - ASYNC + PARALLEL + SMART FILTERING")
-    print("=" * 70)
+  
     
     result = crawl_entire_site(start_url)
     
     if result.get("success"):
-        print(f"\n✅ Products ready for AI processing!")
+        print(f"\n Products ready for  processing!")
     else:
-        print(f"\n❌ Failed: {result.get('error')}")
+        print(f"\n Failed: {result.get('error')}")

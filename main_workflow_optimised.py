@@ -197,7 +197,7 @@ def process_single_product_db(product_id: UUID) -> Dict:
                         }
                         
                 except Exception as e:
-                    print(f"   ⚠️ ASSURMAX pricing error: {e}")
+                    print(f"   ASSURMAX pricing error: {e}")
                     response["assurmax_premium"] = {
                         "eligible": False,
                         "reason": f"ASSURMAX calculation failed: {str(e)}"
@@ -365,9 +365,7 @@ def run_workflow(max_products: int = 8, domain_hint: Optional[str] = None) -> Op
         db.close()
 
 
-# ============================================================
-# CLI
-# ============================================================
+
 
 if __name__ == "__main__":
     import sys
